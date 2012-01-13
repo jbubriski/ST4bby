@@ -5,14 +5,14 @@ This is a T4 template that will generate POCO's (Plain Old CLR Objects) from you
 
 Here is all you need to do:
 
-1. Drop the 2 T4 templates into your Visual Studio Project.
-2. Open up the "Pocos.tt" template
-3. Set your own values for the namespaceName, serverName, and databaseName
-4. Save the template and it should promt you to run!  Just hit OK and watch the magic happen!
-5. Add references to the Micorosoft SQL Server SMO assemblies.  I found mine in "C:\Program Files\Microsoft SQL Server\100\SDK\Assemblies" and you can get them through the Web Platform Installer.  Here are the specific ones you need:
+1. Add references to the Micorosoft SQL Server SMO assemblies.  You can easily get them through the Web Platform Installer.  After installing I found mine in "C:\Program Files\Microsoft SQL Server\100\SDK\Assemblies".  Here are the specific ones you need to add to your project:
 	1. Microsoft.SqlServer.ConnectionInfo
 	2. Microsoft.SqlServer.Management.Sdk.Sfc
 	3. Microsoft.SqlServer.Smo
+2. Drop the 2 T4 templates into your Visual Studio Project.
+3. Open up the "Pocos.tt" template.
+4. Set your own values for the namespaceName, serverName, and databaseName.
+5. Save the template and it should promt you to run!  Just hit OK and watch the magic happen!  **Note: when the files are generate, they may not be actually added to your project.  Click the "Show All Files" button to see them and include them.  We're working to fix this.**
 
 After that, you can continue to run the T4 template as you update the database, or you can delete the templates and keep the POCO's.
 
