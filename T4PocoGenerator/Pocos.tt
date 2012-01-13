@@ -6,35 +6,38 @@
 <#@ Import Namespace="Microsoft.SqlServer.Management.Smo" #>
 <#@ Import Namespace="System.Xml.Serialization" #>
 <#
-	var namespaceName = @"AdventureWorks.Data";
-	var serverName = @".\SQLEXPRESS";
-	var databaseName = @"AdventureWorks";
+    var namespaceName = @"";
+    var serverName = @"";
+    var databaseName = @"";
 
     if(!string.IsNullOrWhiteSpace(namespaceName)
-	    && !string.IsNullOrWhiteSpace(serverName)
+        && !string.IsNullOrWhiteSpace(serverName)
         && !string.IsNullOrWhiteSpace(databaseName))
     {
-		var server = new Server(serverName);
-		var database = server.Databases[databaseName];
+        var server = new Server(serverName);
+        var database = server.Databases[databaseName];
 
-		foreach (Table table in database.Tables)
-		{
-			OutputClass(namespaceName, table);
-			SaveOutput(table.Name + ".cs");
-		}
+        foreach (Table table in database.Tables)
+        {
+            if (!table.IsSystemObject)
+            {
+                OutputClass(namespaceName, table);
+                SaveOutput(table.Name + ".cs");
+            }
+        }
     }
 #>
 <#+
-	string OutputProperty(Column column)
+    string OutputProperty(Column column)
     {
-	    var typeMappings = new System.Collections.Generic.Dictionary<string, string> {
-			{ "bit","bool" }, { "uniqueidentifier","Guid" },
-			{ "datetime","DateTime" }, { "datetime2","DateTime" },
-			{ "int","int" }, { "smallint","short" },
-			{ "bigint","long" }, { "varchar","string" },
-			{ "nvarchar","string" }, { "text","string" },
-			{ "ntext","string" }
-		};
+        var typeMappings = new System.Collections.Generic.Dictionary<string, string> {
+            { "bit","bool" }, { "uniqueidentifier","Guid" },
+            { "datetime","DateTime" }, { "datetime2","DateTime" },
+            { "int","int" }, { "smallint","short" },
+            { "bigint","long" }, { "varchar","string" },
+            { "nvarchar","string" }, { "text","string" },
+            { "ntext","string" }
+        };
         var sqlDataType      = column.DataType.Name;
         var isNullable       = column.Nullable;
         var isPrimaryKey     = column.InPrimaryKey;
@@ -49,38 +52,38 @@
 
     System.Collections.Generic.IEnumerable<string> GatherProperties(ColumnCollection columns)
     {
-		foreach (Column col in columns)
-		{
-			yield return OutputProperty(col);
-		}
-	}
+        foreach (Column col in columns)
+        {
+            yield return OutputProperty(col);
+        }
+    }
 
-	void OutputClass(string namespaceName, Table table)
-	{
-#>namespace <#= namespaceName #>
+    void OutputClass(string namespaceName, Table table)
+    {
+#>namespace <#= namespaceName + "." + table.Schema #>
 {
-	using System;
-	using System.ComponentModel.DataAnnotations;
+    using System;
+    using System.ComponentModel.DataAnnotations;
 
-	public class <#= table.Name #>
-	{
-		<#+ OutputProperties(table); #>
-	}
+    public class <#= table.Name #>
+    {
+        <#+ OutputProperties(table); #>
+    }
 }
 <#+
-	}
+    }
 #>
 <#+
-	// Insert any template procedures here
-	void OutputProperties(Table table)
-	{
-		PushIndent("\t");
+    // Insert any template procedures here
+    void OutputProperties(Table table)
+    {
+        PushIndent("\t");
 
-		var properties = GatherProperties(table.Columns);
+        var properties = GatherProperties(table.Columns);
 #>
 <#= String.Join(System.Environment.NewLine, properties) #>
 <#+
 
-		PopIndent();
-	}
+        PopIndent();
+    }
 #>
