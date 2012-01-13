@@ -6,9 +6,9 @@
 <#@ Import Namespace="Microsoft.SqlServer.Management.Smo" #>
 <#@ Import Namespace="System.Xml.Serialization" #>
 <#
-   	var namespaceName = @"";
-	var serverName = @"";
-	var databaseName = @"";
+   	var namespaceName = @"waaaa";
+    var serverName = @"SVDEVDB1";
+    var databaseName = @"Portal";
     
     if(!string.IsNullOrWhiteSpace(namespaceName) 
 	    && !string.IsNullOrWhiteSpace(serverName) 
@@ -16,18 +16,21 @@
     {
 		var server = new Server(serverName);
 		var database = server.Databases[databaseName];
-	
+		
 		foreach (Table table in database.Tables)
 		{
-			OutputClass(namespaceName, table);
-			SaveOutput(table.Name + ".cs");	      
+			if (!table.IsSystemObject)
+			{
+				OutputClass(namespaceName, table);
+				SaveOutput(table.Name + ".cs");
+			}    
 		}
     }
 #>
 <#+
 	void OutputClass(string namespaceName, Table table)
 	{
-#>namespace <#= namespaceName #>
+#>namespace <#= namespaceName + "." + table.Schema #>
 {
 	using System;
 	using System.ComponentModel.DataAnnotations;
@@ -71,8 +74,14 @@ public Guid<#= column.Nullable ? "?" : ""  #> <#= column.Name #> { get; set; }
 					break;
                 case "datetime":
                 case "datetime2":
+                case "smalldatetime":
 #>
 public DateTime<#= column.Nullable ? "?" : ""  #> <#= column.Name #> { get; set; }
+<#+
+					break;
+				case "tinyint":
+#>
+public byte<#= column.Nullable ? "?" : ""  #> <#= column.Name #> { get; set; }
 <#+
 					break;
 				case "int":
@@ -82,6 +91,21 @@ public DateTime<#= column.Nullable ? "?" : ""  #> <#= column.Name #> { get; set;
 public int<#= column.Nullable ? "?" : ""  #> <#= column.Name #> { get; set; }
 <#+
 					break;
+                case "decimal":
+                case "money":
+                case "smallmoney":
+                case "numeric":
+#>
+public decimal<#= column.Nullable ? "?" : ""  #> <#= column.Name #> { get; set; }
+<#+
+					break;
+				case "float":
+#>
+public double<#= column.Nullable ? "?" : ""  #> <#= column.Name #> { get; set; }
+<#+
+					break;
+                case "char":
+                case "nchar":
 				case "varchar":
 				case "nvarchar":
                 case "text":
