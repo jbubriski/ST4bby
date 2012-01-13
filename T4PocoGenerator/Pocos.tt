@@ -1,0 +1,105 @@
+﻿<#@ Include File="SaveOutput.tt" #>
+<#@ Assembly Name="System.Xml" #>
+<#@ Assembly Name="Microsoft.SqlServer.ConnectionInfo" #>
+<#@ Assembly Name="Microsoft.SqlServer.Management.Sdk.Sfc" #>
+<#@ Assembly Name="Microsoft.SqlServer.Smo" #>
+<#@ Import Namespace="Microsoft.SqlServer.Management.Smo" #>
+<#@ Import Namespace="System.Xml.Serialization" #>
+<#
+   	var namespaceName = @"";
+	var serverName = @"";
+	var databaseName = @"";
+    
+    if(!string.IsNullOrWhiteSpace(namespaceName) 
+	    && !string.IsNullOrWhiteSpace(serverName) 
+        && !string.IsNullOrWhiteSpace(databaseName))
+    {
+		var server = new Server(serverName);
+		var database = server.Databases[databaseName];
+	
+		foreach (Table table in database.Tables)
+		{
+			OutputClass(namespaceName, table);
+			SaveOutput(table.Name + ".cs");	      
+		}
+    }
+#>
+<#+
+	void OutputClass(string namespaceName, Table table)
+	{
+#>namespace <#= namespaceName #>
+{
+	using System;
+	using System.ComponentModel.DataAnnotations;
+
+	public class <#= table.Name #>
+	{
+		<#+ OutputProperties(table); #>
+	}
+}
+<#+
+	}
+#>
+<#+
+	// Insert any template procedures here
+	void OutputProperties(Table table)
+	{
+		PushIndent("\t");
+		
+		foreach (Column column in table.Columns)
+		{
+			PushIndent("\t");
+
+            if (column.InPrimaryKey)
+            {
+#>
+[Key]
+<#+
+            }
+	   
+			switch(column.DataType.Name)
+			{	
+				case "bit":
+#>
+public bool<#= column.Nullable ? "?" : ""  #> <#= column.Name #> { get; set; }
+<#+
+					break;
+				case "uniqueidentifier":
+#>
+public Guid<#= column.Nullable ? "?" : ""  #> <#= column.Name #> { get; set; }
+<#+
+					break;
+                case "datetime":
+                case "datetime2":
+#>
+public DateTime<#= column.Nullable ? "?" : ""  #> <#= column.Name #> { get; set; }
+<#+
+					break;
+				case "int":
+				case "smallint":
+				case "bigint":
+#>
+public int<#= column.Nullable ? "?" : ""  #> <#= column.Name #> { get; set; }
+<#+
+					break;
+				case "varchar":
+				case "nvarchar":
+                case "text":
+				case "ntext":
+#>
+public string <#= column.Name #> { get; set; }
+<#+
+					break;
+				default:
+#>
+public string <#= column.Name #> { get; set; } // <#= column.DataType #>
+<#+
+					break;
+			}
+			
+			PopIndent();
+     	}
+		
+		PopIndent();
+	}
+#>
