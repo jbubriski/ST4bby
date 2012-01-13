@@ -1,105 +1,108 @@
-﻿<#@ Include File="SaveOutput.tt" #>
+<#@ Include File="SaveOutput.tt" #>
 <#@ Assembly Name="System.Xml" #>
+<#@ Assembly Name="System.Text.RegularExpression" #>
 <#@ Assembly Name="Microsoft.SqlServer.ConnectionInfo" #>
 <#@ Assembly Name="Microsoft.SqlServer.Management.Sdk.Sfc" #>
 <#@ Assembly Name="Microsoft.SqlServer.Smo" #>
 <#@ Import Namespace="Microsoft.SqlServer.Management.Smo" #>
 <#@ Import Namespace="System.Xml.Serialization" #>
 <#
-   	var namespaceName = @"";
-	var serverName = @"";
-	var databaseName = @"";
-    
-    if(!string.IsNullOrWhiteSpace(namespaceName) 
-	    && !string.IsNullOrWhiteSpace(serverName) 
+    var namespaceName = @"";
+    var serverName = @"";
+    var databaseName = @"";
+
+    var excludeTablesPattern = @""; // ex: ^aspnet_
+
+    if(!string.IsNullOrWhiteSpace(namespaceName)
+        && !string.IsNullOrWhiteSpace(serverName)
         && !string.IsNullOrWhiteSpace(databaseName))
     {
-		var server = new Server(serverName);
-		var database = server.Databases[databaseName];
-	
-		foreach (Table table in database.Tables)
-		{
-			OutputClass(namespaceName, table);
-			SaveOutput(table.Name + ".cs");	      
-		}
+        var server = new Server(serverName);
+        var database = server.Databases[databaseName];
+
+        foreach (Table table in database.Tables)
+        {
+            var shouldIgnoreTable = false;
+
+            if(String.IsNullOrWhiteSpace(excludeTablesPattern))
+            {
+                shouldIgnoreTable = Regex.IsMatch(table.Name, excludeTablesPattern,
+                                        RegexOptions.Singleline |
+                                        RegexOptions.IgnoreCase);
+            }
+
+            if(shouldIgnoreTable)
+            {
+                continue;
+            }
+            else
+            {
+                OutputClass(namespaceName, table);
+                SaveOutput(table.Name + ".cs");
+            }
+        }
+    }
+
+    var typeMappings = Dictionary<string,string>() {
+        { "bit","bool" },
+        { "uniqueidentifier","Guid" },
+        { "datetime","DateTime" },
+        { "datetime2","DateTime" },
+        { "int","int" },
+        { "smallint","short" },
+        { "bigint","long" },
+        { "varchar","string" },
+        { "nvarchar","string" },
+        { "text","string" },
+        { "ntext","string" }
+    };
+
+    string OutputProperty(Column column)
+    {
+        var sqlDataType      = column.DataType.Name;
+        var isNullable       = column.Nullable;
+        var isPrimaryKey     = column.InPrimaryKey;
+        var type             = typeMappings.ContainsKey(sqlDataType) ? typeMappings[sqlDataType] : "string";
+        var typeFormat       = type != "string" && isNullable ? "Nullable<{0}>" : "{0}";
+
+        return String.Format(
+            "\t{0} public {1} {2} {{ get; set; }}",
+            isPrimaryKey ? "[Key]\r\n" : "",
+            String.Format(typeFormat,type),
+            name);
+    }
+
+    IEnumerable<string> GatherProperties(ColumnCollection columns)
+    {
+        foreach(var col in columns)
+        {
+            return yield OutputProperty(col);
+        }
     }
 #>
-<#+
-	void OutputClass(string namespaceName, Table table)
-	{
-#>namespace <#= namespaceName #>
-{
-	using System;
-	using System.ComponentModel.DataAnnotations;
 
-	public class <#= table.Name #>
-	{
-		<#+ OutputProperties(table); #>
-	}
+<#+
+    void OutputClass(string namespaceName, Table table)
+    {
+#>
+namespace <#= namespaceName #>
+{
+    using System;
+    using System.ComponentModel.DataAnnotations;
+
+    public class <#= table.Name #>
+    {
+<#
+        PushIndent("\t");
+
+        var properties = GatherProperties(table.Columns);
+
+<#= String.Join(System.Environment.NewLine, properties) #>
+
+        PopIndent();
+    }
+#>
 }
 <#+
-	}
-#>
-<#+
-	// Insert any template procedures here
-	void OutputProperties(Table table)
-	{
-		PushIndent("\t");
-		
-		foreach (Column column in table.Columns)
-		{
-			PushIndent("\t");
-
-            if (column.InPrimaryKey)
-            {
-#>
-[Key]
-<#+
-            }
-	   
-			switch(column.DataType.Name)
-			{	
-				case "bit":
-#>
-public bool<#= column.Nullable ? "?" : ""  #> <#= column.Name #> { get; set; }
-<#+
-					break;
-				case "uniqueidentifier":
-#>
-public Guid<#= column.Nullable ? "?" : ""  #> <#= column.Name #> { get; set; }
-<#+
-					break;
-                case "datetime":
-                case "datetime2":
-#>
-public DateTime<#= column.Nullable ? "?" : ""  #> <#= column.Name #> { get; set; }
-<#+
-					break;
-				case "int":
-				case "smallint":
-				case "bigint":
-#>
-public int<#= column.Nullable ? "?" : ""  #> <#= column.Name #> { get; set; }
-<#+
-					break;
-				case "varchar":
-				case "nvarchar":
-                case "text":
-				case "ntext":
-#>
-public string <#= column.Name #> { get; set; }
-<#+
-					break;
-				default:
-#>
-public string <#= column.Name #> { get; set; } // <#= column.DataType #>
-<#+
-					break;
-			}
-			
-			PopIndent();
-     	}
-		
-		PopIndent();
-	}
+    }
 #>
