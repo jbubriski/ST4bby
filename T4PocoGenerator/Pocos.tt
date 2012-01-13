@@ -58,32 +58,31 @@
         }
     }
 
+    void Out(string stuff)
+    {
+#><#= stuff #><#+
+    }
+
+    void Out(string stuff, params object[] args)
+    {
+#><#= String.Format(stuff,args) #><#+
+    }
+
     void OutputClass(string namespaceName, Table table)
     {
-#>namespace <#= namespaceName + "." + table.Schema #>
-{
-    using System;
-    using System.ComponentModel.DataAnnotations;
-
-    public class <#= table.Name #>
-    {
-        <#+ OutputProperties(table); #>
-    }
-}
-<#+
-    }
-#>
-<#+
-    // Insert any template procedures here
-    void OutputProperties(Table table)
-    {
-        PushIndent("\t");
-
-        var properties = GatherProperties(table.Columns);
-#>
-<#= String.Join(System.Environment.NewLine, properties) #>
-<#+
-
-        PopIndent();
+    	Out("namespace {0}.{1}", namespaceName, table.Schema);
+    	Out("{");
+    	PushIndent("\t");
+    		Out("using System;");
+    		Out("using System.ComponentModel.DataAnnotations;");
+    		Out("public class {0}", table.Name);
+    		Out("{");
+    		PushIndent("\t");
+    			var properties = GatherProperties(table.Columns);
+    			Out(String.Join(System.Environment.NewLine, properties));
+    		PopIndent();
+    		Out("}");
+    	PopIndent();
+    	Out("}");
     }
 #>
