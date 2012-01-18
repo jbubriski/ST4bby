@@ -45,7 +45,7 @@
         var typeFormat       = type != "string" && isNullable ? "Nullable<{0}>" : "{0}";
 
         return String.Format("{0}public {1} {2} {{ get; set; }}",
-            isPrimaryKey ? "[Key]\r\n\t" : "\t",
+            isPrimaryKey ? "\t[Key]\r\n\t" : "\t",
             String.Format(typeFormat,type),
             column.Name);
     }
@@ -70,17 +70,25 @@
 
     void OutputClass(string namespaceName, Table table)
     {
-    	Out("namespace {0}.{1}", namespaceName, table.Schema);
+		Out("namespace {0}.{1}", namespaceName, table.Schema);
+		Out(System.Environment.NewLine);
     	Out("{");
-    	PushIndent("\t");
-    		Out("using System;");
-    		Out("using System.ComponentModel.DataAnnotations;");
+        PushIndent("\t");
+			Out(System.Environment.NewLine);
+			Out("using System;");
+			Out(System.Environment.NewLine);
+            Out("using System.ComponentModel.DataAnnotations;");
+            Out(System.Environment.NewLine);
+            Out(System.Environment.NewLine);
     		Out("public class {0}", table.Name);
-    		Out("{");
-    		PushIndent("\t");
+            Out(System.Environment.NewLine);
+            Out("{");
+				Out(System.Environment.NewLine);
+    			PushIndent("\t");
     			var properties = GatherProperties(table.Columns);
     			Out(String.Join(System.Environment.NewLine, properties));
-    		PopIndent();
+            PopIndent();
+            Out(System.Environment.NewLine);
     		Out("}");
     	PopIndent();
     	Out("}");
