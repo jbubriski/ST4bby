@@ -21,4 +21,3 @@ Limitations:
 1. Only works with Windows Authentication and configuration values are hardcoded into the template.  Ideally this could work off AppSettings (Web.config/app.config) and allow for SQL Server authentication as well.
 2. Generates POCO's for all tables in the database (no automatic filtering).  Ideally a schema, prefix, or regex filter would be nice.
 3. The only Data Annotation attribute that is currently added is the Key attribute.  Ideally we will support all related validation attributes.
-4. Currently the C# class files are generated and added to the same directory as the T4 template, but they're not added to the project.  Ideally they should be nested under the T4 Template or at least added to the project.
