@@ -1,7 +1,15 @@
-Hey! Thanks for checking this out!
+ST4bby (A **S**tandalone **T4** POCO Generator)
 ===
 
-This is a T4 template that will generate POCO's (Plain Old CLR Objects) from your database tables and columns.
+ST4bby is a T4 template (actually 2 right now) that will generate POCO's (Plain Old CLR Objects) from your database tables and columns.  It doesn't rely on any particular ORM, but can be used in conjunction with them, including but not limited to
+
+1. Entity Framework
+2. Dapper
+3. Massive
+4. Anything else that uses POCO's relating directly to your database schema.
+
+How do I use it?
+---
 
 Here is all you need to do:
 
