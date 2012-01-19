@@ -1,8 +1,8 @@
 ﻿<#@ template language="C#" hostspecific="true" #>
-<#@ Assembly Name="c:\Program Files (x86)\Microsoft Visual Studio 10.0\Common7\IDE\PublicAssemblies\EnvDTE80.dll" #>
+<#@ Assembly Name="c:\Program Files (x86)\Microsoft Visual Studio 10.0\Common7\IDE\PublicAssemblies\EnvDTE100.dll" #>
 <#@ Assembly Name="c:\Program Files (x86)\Microsoft Visual Studio 10.0\Common7\IDE\PublicAssemblies\EnvDTE.dll" #>
 <#@ import namespace="System.IO" #>
-<#@ import namespace="EnvDTE80" #>
+<#@ import namespace="EnvDTE100" #>
 <#@ import namespace="EnvDTE" #>
 <#+
 void SaveOutput(string outputFileName)
@@ -15,7 +15,7 @@ void SaveOutput(string outputFileName)
 
     // total hack but it adds the newly written file into the current visual studio instance
     var dte = (EnvDTE.DTE)System.Runtime.InteropServices.Marshal.GetActiveObject("VisualStudio.DTE");
-    var solution = (Solution2)dte.Solution;
+    var solution = (Solution)dte.Solution;
     var project = solution.Projects.Item(1);
 
     project.ProjectItems.AddFromFile(outputFilePath);
