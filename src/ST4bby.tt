@@ -1,0 +1,139 @@
+<#@ Include File="ST4bby.Config.ttinclude" #>
+<#@ Assembly Name="System.Xml" #>
+<#@ Assembly Name="System.Core" #>
+<#@ Assembly Name="Microsoft.SqlServer.ConnectionInfo" #>
+<#@ Assembly Name="Microsoft.SqlServer.Management.Sdk.Sfc" #>
+<#@ Assembly Name="Microsoft.SqlServer.Smo" #>
+<#@ Assembly Name="System.Data" #>
+<#@ Assembly Name="EnvDTE" #>
+<#@ Import Namespace="Microsoft.SqlServer.Management.Smo" #>
+<#@ Import Namespace="System.Xml.Serialization" #>
+<#@ Import Namespace="System.Linq" #>
+<#@ Import Namespace="System.Data.Common" #>
+<#@ Import Namespace="System.Text.RegularExpressions" #>
+<#@ Import Namespace="System.Collections.Generic" #>
+<#@ Import Namespace="Microsoft.SqlServer.Management.Common" #>
+<#@ import namespace="System.Diagnostics" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Xml" #>
+<#@ import namespace="EnvDTE" #>
+<#
+  if (ConfigIsValid())
+    {
+      var connectionString = GetConnectionString();
+        using(SqlConnection conn = new SqlConnection(connectionString))
+        {
+            var serverConnection = new ServerConnection(conn);
+            var tables = new Server(serverConnection).Databases[databaseName].Tables;
+
+            foreach (Table table in tables)
+            {
+                if (!table.IsSystemObject)
+                {
+                    OutputClass(nameSpaceName, table);
+                    var path = SaveOutput(table.Name + ".cs");
+                    // total hack but it adds the newly written file into the current visual studio instance
+                    var project = GetCurrentProject();
+
+                    project.ProjectItems.AddFromFile(path);
+                }
+            }
+        }
+    }
+#>
+<#+
+    public EnvDTE.Project GetCurrentProject()
+    {
+        var serviceProvider             = (IServiceProvider)Host;
+        var dte                         = (EnvDTE.DTE)serviceProvider.GetService(typeof(EnvDTE.DTE));
+        var currentSlnProjects          = (Array)dte.ActiveSolutionProjects;
+
+        return (EnvDTE.Project)currentSlnProjects.GetValue(0);
+    }
+
+    string OutputProperty(Column column)
+    {
+        var typeMappings = new Dictionary<string, string> {
+            { "bit","bool" },           { "uniqueidentifier","Guid" },
+            { "datetime","DateTime" },  { "datetime2","DateTime" },
+            { "int","int" },            { "smallint","short" },
+            { "bigint","long" },        { "varchar","string" },
+            { "nchar","char" },         { "char","char" },
+            { "nvarchar","string" },    { "text","string" },
+            { "ntext","string" }
+        };
+
+        var isNullable       = column.Nullable;
+        var type             = typeMappings.ContainsKey(column.DataType.Name) ? typeMappings[column.DataType.Name] : "string";
+        var typeFormat       = type != "string" && isNullable ? "Nullable<{0}>" : "{0}";
+
+        var annotations      = GetAnnotations(column);
+
+        return String.Format("{0}public {1} {2} {{ get; set; }}", annotations, String.Format(typeFormat,type), column.Name);
+    }
+
+    string GetAnnotations(Column col)
+    {
+      var builder = new List<string>();
+        var canHaveLength = new string[] { "nvarchar", "varchar", "char", "nchar" };
+        if (canHaveLength.Contains(col.DataType.Name) && col.DataType.MaximumLength > -1)
+            builder.Add( String.Format("StringLength({0})", col.DataType.MaximumLength));
+
+        if (!col.Nullable)
+            builder.Add("Required");
+
+        if (col.InPrimaryKey)
+          builder.Add("Key");
+
+        var notations = String.Join(", ", builder);
+      return builder.Count > 0 ? String.Format("[{0}]{1}", notations, System.Environment.NewLine) : String.Empty;
+  }
+
+    System.Collections.Generic.IEnumerable<string> GatherProperties(ColumnCollection columns)
+    {
+        foreach (Column col in columns)
+            yield return OutputProperty(col);
+    }
+
+    void Out(string stuff)
+    {
+#><#= stuff + System.Environment.NewLine #><#+
+    }
+
+    void Out(string stuff, params object[] args)
+    {
+#><#= String.Format(stuff, args) + System.Environment.NewLine #><#+
+    }
+
+    string SaveOutput(string outputFileName)
+    {
+      var content = this.GenerationEnvironment.ToString();
+      string templateDirectory = Path.GetDirectoryName(Host.TemplateFile);
+      string outputFilePath = Path.Combine(templateDirectory, outputFileName);
+
+        File.WriteAllText(outputFilePath, content);
+
+      this.GenerationEnvironment.Remove(0, this.GenerationEnvironment.Length);
+
+        return outputFilePath;
+    }
+
+    void OutputClass(string namespaceName, Table table)
+    {
+      Out("namespace {0}.{1}", namespaceName, table.Schema);
+      Out("{");
+      PushIndent("\t");
+        Out("using System;");
+        Out("using System.ComponentModel.DataAnnotations;");
+        Out("public class {0}", table.Name);
+        Out("{");
+        PushIndent("\t");
+          var properties = GatherProperties(table.Columns);
+          Out(String.Join(System.Environment.NewLine, properties));
+        PopIndent();
+        Out("}");
+      PopIndent();
+      Out("}");
+    }
+#>

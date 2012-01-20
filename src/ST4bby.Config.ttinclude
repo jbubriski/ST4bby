@@ -1,0 +1,73 @@
+<#@ template language="C#" hostspecific="true" Debug="false" #>
+<#@ Assembly Name="System.Data" #>
+<#@ Assembly Name="System.Configuration" #>
+<#@ Assembly Name="System.Web" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Data" #>
+<#@ import namespace="System.Data.SqlClient" #>
+<#@ import namespace="System.Data.Common" #>
+<#@ import namespace="System.Configuration" #>
+<#+
+    // CONFIGURE YOUR DATABASE SETTINGS HERE
+    string nameSpaceName                = @"";
+    string serverName                   = @".\sqlexpress";
+    string databaseName                 = @"";
+
+    // If you want to use sql authentication fill out these two variables
+    string SqlAuth_Username             = @"";
+    string SqlAuth_Password             = @"";
+
+    // If you want to use sql authentication fill out these two variables
+    string Config_ConnectionName        = @"";
+
+    // DON'T CHANGE ANYTHING BELOW HERE UNLESS
+    // YOU HAVE MORE THAN 1000 FOLLOWERS ON TWITTER
+
+    string SqlAuthConnectionString = "Data Source={0};Initial Catalog={1};User Id={2};Password={3};";
+    string TrustedConnectionString = "Data Source={0};Initial Catalog={1};Integrated Security=SSPI;";
+
+    bool ConfigIsValid()
+    {
+        return !string.IsNullOrWhiteSpace(nameSpaceName)
+                    && !string.IsNullOrWhiteSpace(serverName)
+                    && !string.IsNullOrWhiteSpace(databaseName);
+    }
+
+    string GetConnectionString()
+    {
+      string conn = String.Format(TrustedConnectionString, serverName, databaseName);
+        if( !String.IsNullOrWhiteSpace(SqlAuth_Username) )
+            conn = String.Format(SqlAuthConnectionString, serverName, databaseName, SqlAuth_Username, SqlAuth_Password);
+        else if (!String.IsNullOrWhiteSpace(Config_ConnectionName))
+        {
+            var configFile = new ExeConfigurationFileMap { ExeConfigFilename = GetRootProjectDirectory() };
+            var config = System.Configuration.ConfigurationManager.OpenMappedExeConfiguration(configFile, ConfigurationUserLevel.None);
+            conn = config.ConnectionStrings.ConnectionStrings[Config_ConnectionName].ConnectionString;
+        }
+
+        return conn;
+    }
+
+    int recurseCount = 0;
+    string GetRootProjectDirectory(string root = null)
+    {
+      ++recurseCount;
+        if (root == null)
+        {
+          recurseCount = 0;
+            root = Host.TemplateFile;
+        }
+      string templateDirectory = Path.GetDirectoryName(root);
+        var files = Directory.GetFiles(templateDirectory, "app.config", SearchOption.TopDirectoryOnly) ??
+                  Directory.GetFiles(templateDirectory, "web.config", SearchOption.TopDirectoryOnly);
+
+        if (files == null)
+        {
+          if (recurseCount < 100)
+            {
+             templateDirectory = GetRootProjectDirectory(Directory.GetParent(templateDirectory).FullName);
+            }
+        }
+        return Path.Combine(templateDirectory, files[0]);
+    }
+#>
