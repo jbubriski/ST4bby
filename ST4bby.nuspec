@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <version>1.0.0</version>
+    <authors>john bubriski,jared barboza</authors>
+    <owners>john bubriski,jared barboza</owners>
+    <projectUrl>https://github.com/jbubriski/ST4bby</projectUrl>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName="System" targetFramework=".NETFramework4.0" />
+    </frameworkAssemblies>
+    <id>ST4bby</id>
+    <title>ST4bby</title>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>The Millenium Falcon of POCO generators. </description>
+    <language>en-US</language>
+    <tags>T4 POCO C# database codegen</tags>
+  </metadata>
+  <files>
+    <file src="src\ST4bby.Config.ttinclude" target="content\ST4bby.Config.ttinclude" />
+    <file src="src\ST4bby.tt" target="content\ST4bby.tt" />
+  </files>
+</package>
