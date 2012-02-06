@@ -37,6 +37,10 @@
     // The namespace will then be "MyDatalayer".
     const bool UseSchemaForNamespace = false;
 
+    // Static constructor name.
+    // Leave blank if no static constructor should be created.
+    const string NameOfStaticConstructor = "Create";
+
 
 
     // DON'T CHANGE ANYTHING BELOW HERE UNLESS
