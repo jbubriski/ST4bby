@@ -64,6 +64,22 @@
         return (EnvDTE.Project)currentSlnProjects.GetValue(0);
     }
 	
+	/// <summary> This method creates the signature for the class.
+    /// E.g.: public partial class Customer()
+    /// </summary>
+    /// <param name="table"></param>
+    /// <param name="usePartialClass"></param>
+    /// <returns></returns>
+   private static string CreateClassSignature( Table table, bool usePartialClass )
+   {
+     var ret = "public";
+	if( usePartialClass )
+	{
+		ret += " partial";
+	}
+     return ret + " class " + table.Name;
+   }
+
 	/// <summary> This method creates the namespace signature.
 	/// </summary>
 	/// <param name="namespaceName"></param>
@@ -245,7 +261,7 @@
 			Out("using System;");
 			Out("using System.ComponentModel.DataAnnotations;");
 			Out( "" );
-			Out("public class {0}", table.Name);
+			Out( CreateClassSignature( table, UsePartialClass ) );
 			Out("{");
 			PushIndent("\t");
 				//	Properties.
