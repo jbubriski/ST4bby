@@ -80,6 +80,11 @@
 		return ret;
 	}
 	
+    /// <summary> This method creates a parameter for a method from a column.
+    /// E.g.: "int CustomerID" or "string Name".
+    /// </summary>
+    /// <param name="column"></param>
+    /// <returns></returns>
 	private static string CreateMethodParameter( Column column )
 	{
         var isNullable       = column.Nullable;
@@ -89,7 +94,17 @@
         return String.Format("{0} {1}", String.Format(typeFormat,type), column.Name);
 	}
 
-
+    /// <summary> This method creates a method signature.
+    /// E.g.: "private void Set( CustomerID, Name )".
+    /// </summary>
+    /// <param name="scope"></param>
+    /// <param name="isStatic"></param>
+    /// <param name="returnType"></param>
+    /// <param name="methodName"></param>
+    /// <param name="columns"></param>
+    /// <param name="includePrimaryKey">Whether the primary key should be included or not.
+    /// New objects often can't have the PK set at the client, only in the database.</param>
+    /// <returns></returns>
 	private static string CreateMethodSignature( string scope, bool isStatic, string returnType, string methodName, ColumnCollection columns, bool includePrimaryKey = true )
 	{
 		string ret = scope;
@@ -122,6 +137,13 @@
 		return ret;
 	}
 
+    /// <summary> This method creates all parameters for a constructor.
+    /// It is not necessarily only for constructor use.  A method like "Set( CustomerID, Name, ...)"
+    /// could use it too.  Rename it when need arises.
+    /// </summary>
+    /// <param name="columns"></param>
+    /// <param name="includePrimaryKey"></param>
+    /// <returns></returns>
 	private static string CreateNamedArgumentListForConstructor( ColumnCollection columns, bool includePrimaryKey = true )
 	{
 		var assignmentList = new List<string>();
