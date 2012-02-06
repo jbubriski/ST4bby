@@ -1,4 +1,4 @@
-<#@ Include File="ST4bby.Config.ttinclude" #>
+﻿<#@ Include File="ST4bby.Config.ttinclude" #>
 <#@ Assembly Name="System.Xml" #>
 <#@ Assembly Name="System.Core" #>
 <#@ Assembly Name="Microsoft.SqlServer.ConnectionInfo" #>
@@ -29,7 +29,7 @@
 
             foreach (Table table in tables)
             {
-                if (!table.IsSystemObject)
+                if ( IsClassOkToGenerate( table ) )
                 {
                     OutputClass(nameSpaceName, table);
                     var path = SaveOutput(table.Name + ".cs");
@@ -43,6 +43,18 @@
     }
 #>
 <#+
+	
+	private readonly static Dictionary<string, string> TypeMappings = new Dictionary<string, string> 
+	{
+        { "bit","bool" },           { "uniqueidentifier","Guid" },
+        { "datetime","DateTime" },  { "datetime2","DateTime" },
+        { "int","int" },            { "smallint","short" },
+        { "bigint","long" },        { "varchar","string" },
+        { "nchar","char" },         { "char","char" },
+        { "nvarchar","string" },    { "text","string" },
+        { "ntext","string" }
+    };
+	
     public EnvDTE.Project GetCurrentProject()
     {
         var serviceProvider             = (IServiceProvider)Host;
@@ -51,21 +63,102 @@
 
         return (EnvDTE.Project)currentSlnProjects.GetValue(0);
     }
-
-    string OutputProperty(Column column)
-    {
-        var typeMappings = new Dictionary<string, string> {
-            { "bit","bool" },           { "uniqueidentifier","Guid" },
-            { "datetime","DateTime" },  { "datetime2","DateTime" },
-            { "int","int" },            { "smallint","short" },
-            { "bigint","long" },        { "varchar","string" },
-            { "nchar","char" },         { "char","char" },
-            { "nvarchar","string" },    { "text","string" },
-            { "ntext","string" }
-        };
-
+	
+	/// <summary> This method creates the namespace signature.
+	/// </summary>
+	/// <param name="namespaceName"></param>
+	/// <param name="table"></param>
+	/// <param name="useSchemaForNamespace"></param>
+	/// <returns></returns>
+	private static string CreateNamespaceSignature( string namespaceName, Table table, bool useSchemaForNamespace )
+	{
+		string ret = string.Format( "namespace {0}", namespaceName );
+		if( useSchemaForNamespace )
+		{
+			ret += "." + table.Schema;
+		}
+		return ret;
+	}
+	
+	private static string CreateMethodParameter( Column column )
+	{
         var isNullable       = column.Nullable;
-        var type             = typeMappings.ContainsKey(column.DataType.Name) ? typeMappings[column.DataType.Name] : "string";
+        var type             = TypeMappings.ContainsKey(column.DataType.Name) ? TypeMappings[column.DataType.Name] : "string";
+        var typeFormat       = type != "string" && isNullable ? "Nullable<{0}>" : "{0}";
+
+        return String.Format("{0} {1}", String.Format(typeFormat,type), column.Name);
+	}
+
+
+	private static string CreateMethodSignature( string scope, bool isStatic, string returnType, string methodName, ColumnCollection columns, bool includePrimaryKey = true )
+	{
+		string ret = scope;
+		if( isStatic )
+		{
+			ret += " static";
+		}
+		if( false == string.IsNullOrWhiteSpace( returnType ) )
+		{
+			ret += " " + returnType;
+		}
+		ret += " " + methodName + "(";
+		if( null != columns )
+		{
+			var paramList = new List<string>();
+			foreach( Column column in columns )
+			{
+				if( column.InPrimaryKey && ! includePrimaryKey )
+				{
+					//	The column is part of the primary key and we don't want it according to parameter.
+				}
+				else
+				{
+					paramList.Add( CreateMethodParameter( column ) );
+				}
+			}
+			ret += " " + string.Join( ", ", paramList.ToArray() ) + " ";
+		}
+		ret += ")";
+		return ret;
+	}
+
+	private static string CreateNamedArgumentListForConstructor( ColumnCollection columns, bool includePrimaryKey = true )
+	{
+		var assignmentList = new List<string>();
+		foreach( Column column in columns )
+		{
+			if( column.InPrimaryKey && ! includePrimaryKey )
+			{
+				//	The column is part of the primary key and we don't want it according to parameter.
+			}
+			else
+			{
+				assignmentList.Add( column.Name + " = " + column.Name );
+			}	
+		}
+		return string.Join( "," + Environment.NewLine, assignmentList.ToArray() );
+	}
+	
+    /// <summary> This method returns true if the table is among the ones that should generate code.
+    /// Typically aren't system objects and explicitly excluded tables among those.
+    /// </summary>
+    /// <param name="table">The table in question.</param>
+    /// <returns></returns>
+    private bool IsClassOkToGenerate( Table table )
+    {
+        if( false == string.IsNullOrWhiteSpace( ExcludeTablesRegex ) &&
+            ( table.IsSystemObject || Regex.IsMatch( table.Name, ExcludeTablesRegex ) ) )
+        {
+            return false;
+        }else{
+            return true;
+        }
+    }
+
+	private string OutputProperty(Column column)
+    {
+        var isNullable       = column.Nullable;
+        var type             = TypeMappings.ContainsKey(column.DataType.Name) ? TypeMappings[column.DataType.Name] : "string";
         var typeFormat       = type != "string" && isNullable ? "Nullable<{0}>" : "{0}";
 
         var annotations      = GetAnnotations(column);
@@ -121,19 +214,59 @@
 
     void OutputClass(string namespaceName, Table table)
     {
-      Out("namespace {0}.{1}", namespaceName, table.Schema);
-      Out("{");
-      PushIndent("\t");
-        Out("using System;");
-        Out("using System.ComponentModel.DataAnnotations;");
-        Out("public class {0}", table.Name);
-        Out("{");
-        PushIndent("\t");
-          var properties = GatherProperties(table.Columns);
-          Out(String.Join(System.Environment.NewLine, properties));
-        PopIndent();
-        Out("}");
-      PopIndent();
-      Out("}");
+		Out("// This class is automatically generated by ST4bby {0}.", System.DateTime.Now.ToString());
+		Out("// Read more at https://github.com/jbubriski/ST4bby/");
+		Out("");
+		Out("namespace {0}.{1}", namespaceName, table.Schema);
+		Out("{");
+		PushIndent("\t");
+			Out("using System;");
+			Out("using System.ComponentModel.DataAnnotations;");
+			Out( "" );
+			Out("public class {0}", table.Name);
+			Out("{");
+			PushIndent("\t");
+				//	Properties.
+				var properties = GatherProperties(table.Columns);
+				Out(String.Join(System.Environment.NewLine, properties));
+		
+				//	Static constructors.
+				if( false == string.IsNullOrWhiteSpace( NameOfStaticConstructor ) )
+				{
+					Out("");
+			        Out( "/// <summary> This static constructor takes all fields but the primary key." );
+			        Out( "/// </summary>");
+			        Out( "/// <returns></returns>");
+					Out( CreateMethodSignature( "public", true, table.Name, NameOfStaticConstructor, table.Columns, includePrimaryKey : false ) );
+					Out("{");
+					PushIndent("\t");
+						Out( "return new " + table.Name + "()" );
+						Out( "{" );
+						PushIndent("\t");
+							Out( CreateNamedArgumentListForConstructor( table.Columns, includePrimaryKey : false ) );
+						PopIndent();
+						Out( "};" );
+					PopIndent();
+					Out("}");
+					Out("");
+			        Out( "/// <summary> This static constructor takes all fields including the primary key." );
+			        Out( "/// </summary>");
+			        Out( "/// <returns></returns>");
+					Out( CreateMethodSignature( "public", true, table.Name, NameOfStaticConstructor, table.Columns ) );
+					Out("{");
+					PushIndent("\t");
+						Out( "return new " + table.Name + "()" );
+						Out( "{" );
+						PushIndent("\t");
+							Out( CreateNamedArgumentListForConstructor( table.Columns, includePrimaryKey : true ) );
+						PopIndent();
+						Out( "};" );
+					PopIndent();
+					Out("}");
+				}
+			PopIndent();
+			Out("}");
+		PopIndent();
+		Out("}");
     }
 #>
