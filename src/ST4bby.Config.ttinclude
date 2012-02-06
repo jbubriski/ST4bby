@@ -31,6 +31,11 @@
     //	Set to true for making partial class.
     const bool UsePartialClass = true;
 
+    // Set to true for having the schema in the namespace affect the namespace.
+    // The namespace will for instance be "MyDatalayer.dbo".
+    // With value set to false the schema will be unused.
+    // The namespace will then be "MyDatalayer".
+    const bool UseSchemaForNamespace = false;
 
 
 
