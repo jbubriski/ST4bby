@@ -70,15 +70,20 @@
     /// <param name="table"></param>
     /// <param name="usePartialClass"></param>
     /// <returns></returns>
-   private static string CreateClassSignature( Table table, bool usePartialClass )
-   {
-     var ret = "public";
-	if( usePartialClass )
+	private static string CreateClassSignature( Table table, bool usePartialClass )
 	{
-		ret += " partial";
+		var ret = "public";
+		if( usePartialClass )
+		{
+			ret += " partial";
+		}
+		ret += " class " + table.Name;
+		if( false == string.IsNullOrWhiteSpace( ClassInheritFrom ) )
+		{
+			ret += " : " + ClassInheritFrom;
+		}
+		return ret;
 	}
-     return ret + " class " + table.Name;
-   }
 
 	/// <summary> This method creates the namespace signature.
 	/// </summary>
