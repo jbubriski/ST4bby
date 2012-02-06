@@ -52,7 +52,13 @@
 
         return (EnvDTE.Project)currentSlnProjects.GetValue(0);
     }
-	
+
+    /// <summary> This method creates the signature for the class.
+    /// E.g.: public partial class Customer()
+    /// </summary>
+    /// <param name="table"></param>
+    /// <param name="usePartialClass"></param>
+    /// <returns></returns>
 	private static string CreateClassSignature( Table table, bool usePartialClass )
 	{
 		var ret = "public";
@@ -62,7 +68,7 @@
 		}
 		return ret + " class " + table.Name;
 	}
-	
+
     /// <summary> This method returns true if the table is among the ones that should generate code.
     /// Typically aren't system objects and explicitly excluded tables among those.
     /// </summary>
