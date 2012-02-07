@@ -44,8 +44,8 @@
 #>
 <#+
 	
-	private readonly static Dictionary<string, string> TypeMappings = new Dictionary<string, string> 
-	{
+    private readonly static Dictionary<string, string> TypeMappings = new Dictionary<string, string> 
+    {
         { "bit","bool" },           { "uniqueidentifier","Guid" },
         { "datetime","DateTime" },  { "datetime2","DateTime" },
         { "int","int" },            { "smallint","short" },
