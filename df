@@ -1,0 +1,163 @@
+[33mcommit 8dba9fb3209e6990e8a61e2bc186381d24c87f3f[m
+Author: Ola Fjelddahl <ola.fjelddahl@gmail.com>
+Date:   Sun Feb 5 23:36:33 2012 +0100
+
+    Added a comment to the class that it was automatically generated and the
+    date/time of generation.
+
+[33mcommit 87334b27485b23acd3c46d16282873743a5906b1[m
+Author: John Bubriski <bubriski@gmail.com>
+Date:   Mon Jan 23 22:05:03 2012 -0500
+
+    Updated README per the recent changes.
+
+[33mcommit 78baefd87810b87705ab16e776d581b4441ed959[m
+Author: Jared Barboza <jared.m.barboza@gmail.com>
+Date:   Fri Jan 20 21:26:05 2012 -0500
+
+    Initial commit of the nuspec
+
+[33mcommit d88898b86fa08ed7695a9f23206864f62ce11a50[m
+Merge: 5e2229c 57a5ac9
+Author: John Bubriski <bubriski@gmail.com>
+Date:   Fri Jan 20 09:58:48 2012 -0800
+
+    Merge pull request #11 from jbubriski/Voltron
+    
+    VOLTRON, issues #6, #9, #4, #3 are all taken care of.
+
+[33mcommit 57a5ac9592ced1b1017626375120348d868aa728[m
+Author: Jared Barboza <jared.m.barboza@gmail.com>
+Date:   Thu Jan 19 23:26:11 2012 -0500
+
+    VOLTRON, issues #6, #9, #4, #3 are all taken care of.
+
+[33mcommit 5e2229c99fe82d52bb4be3a1b18a784462c426b4[m
+Author: John Bubriski <bubriski@gmail.com>
+Date:   Wed Jan 18 22:34:27 2012 -0500
+
+    Cleaned up the README image some more
+
+[33mcommit 34957abea75226c9fb29534ef241f30fc13a7cca[m
+Author: John Bubriski <bubriski@gmail.com>
+Date:   Wed Jan 18 22:28:51 2012 -0500
+
+    Cleaned up the README image
+
+[33mcommit b0217a22d09bad2c6dc707b43c77aebd53ac7919[m
+Author: John Bubriski <bubriski@gmail.com>
+Date:   Wed Jan 18 22:25:15 2012 -0500
+
+    Updated the README to reflect the awesome nature of this project.
+
+[33mcommit 9cdf86832fcc27dfde66e01e14f43322537db798[m
+Author: John Bubriski <bubriski@gmail.com>
+Date:   Wed Jan 18 22:23:29 2012 -0500
+
+    Updated the README to reflect the awesome nature of this project.
+
+[33mcommit c0cec1cbc820538b286256d2873e782beca7d370[m
+Author: John Bubriski <bubriski@gmail.com>
+Date:   Wed Jan 18 22:16:57 2012 -0500
+
+    Updated docs to reflect the new (awesome) name and some of the changes Jared made.
+
+[33mcommit fda3bfe86d328b4de270ceb9f3f24babf12969ae[m
+Author: Jared Barboza <jared.m.barboza@gmail.com>
+Date:   Wed Jan 18 21:59:29 2012 -0500
+
+    After fixing issue #5 files are now added to the project!!!
+
+[33mcommit a8dc3d6b16f150331ea9aafac5b1a119e848dfb6[m
+Merge: cc01c8f fce7708
+Author: John Bubriski <bubriski@gmail.com>
+Date:   Wed Jan 18 18:55:53 2012 -0800
+
+    Merge pull request #8 from jbubriski/issue5
+    
+    Issue #5 - Looks good from my house.
+
+[33mcommit fce7708003b6e1fe77732b563c0f263b589fc131[m
+Author: Jared Barboza <jared.m.barboza@gmail.com>
+Date:   Wed Jan 18 21:38:14 2012 -0500
+
+    Changed assembly path to use VS2010, EnvDTE100.dll
+
+[33mcommit 8bb061ce6359a9f26274264a6eef49e8f35c76de[m
+Author: Jared Barboza <jared.m.barboza@gmail.com>
+Date:   Wed Jan 18 20:45:24 2012 -0500
+
+    Issue #5
+    
+    Added a call to DTE to grab the current visual studio instance, then we can add the files to the project as they are created by SaveOutput
+
+[33mcommit cc01c8f74f9e7d8f292c8c85ede35147f1e37de8[m
+Author: John Bubriski <bubriski@gmail.com>
+Date:   Wed Jan 18 16:26:00 2012 -0500
+
+    Temporarily fixed the formatting of the output.
+
+[33mcommit a62a0ed6593696cfff77ef1c80693f4577f89e22[m
+Merge: e9de041 f62062a
+Author: John Bubriski <bubriski@gmail.com>
+Date:   Wed Jan 18 13:12:13 2012 -0800
+
+    Merge pull request #2 from jbubriski/refactor_all_the_things
+    
+    Got my origin pull req to work
+
+[33mcommit f62062ab8bdb63a341f37b67f0fc8f48c8ea0684[m
+Author: Jared Barboza <jared.m.barboza@gmail.com>
+Date:   Fri Jan 13 18:29:24 2012 -0500
+
+    Added support for nchar and char, added rough data annotations support and refactored the outputclass method
+
+[33mcommit 74ad0365415e294b47cdf38e4877f762fac00579[m
+Author: Jared Barboza <jared.m.barboza@gmail.com>
+Date:   Fri Jan 13 16:32:06 2012 -0500
+
+    Cleanup and merge
+    
+    Cleaned up tabs vs spaces, also merged with master
+
+[33mcommit 8d9ebae73f6ce9ec9df5099a12337a8b07fe89ac[m
+Author: Jared Barboza <jared.m.barboza@gmail.com>
+Date:   Fri Jan 13 16:26:00 2012 -0500
+
+    got my original pull req working. Seems to be faster but I was more focused on reducing the SLOC
+
+[33mcommit e9de041283da963ed2a33d9946f1d2cb0d8e0436[m
+Author: John Bubriski <bubriski@gmail.com>
+Date:   Fri Jan 13 15:55:30 2012 -0500
+
+    Added some additional notes in case people get tripped up.
+
+[33mcommit 6045c1dd7d8f5e9c83a6cf6b7f6c4e94e93a6f63[m
+Author: John Bubriski <bubriski@gmail.com>
+Date:   Fri Jan 13 14:52:53 2012 -0500
+
+    Updated README, added support for appending the schema name to the namespace, skipping system objects, and additional column types.
+
+[33mcommit 4292f24574811765dc2876e2460cd4bc4db6ae9d[m
+Author: John Bubriski <bubriski@gmail.com>
+Date:   Fri Jan 13 13:08:10 2012 -0500
+
+    Forgot to remove the old README.
+
+[33mcommit 3e429b22c22793c50e8f9e3ea245f34d07256bb3[m
+Author: John Bubriski <bubriski@gmail.com>
+Date:   Fri Jan 13 08:52:40 2012 -0500
+
+    Converted README to markdown.
+
+[33mcommit bb80f8792dabcaafe00424edd9b9afb98ea9d27b[m
+Author: John Bubriski <bubriski@gmail.com>
+Date:   Thu Jan 12 23:28:33 2012 -0500
+
+    Basic readme and basic POCO generation
+
+[33mcommit 4b235c018348d4beaa4b41e12ea9bf7f9b54952f[m
+Author: John Bubriski <bubriski@gmail.com>
+Date:   Thu Jan 12 23:11:36 2012 -0500
+
+    first commit

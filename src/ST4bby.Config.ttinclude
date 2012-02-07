@@ -21,11 +21,26 @@
 
     // ...or if you want to use sql authentication fill out this variable
     string Config_ConnectionName        = @"";
+
     // CONFIGURE CODE GENERATION HERE
 
     // Regex filter for the tables that are excluded from code generation.
     // E.g.: "Applications|aspnet_.*" excludes the tables one gets with aspnet authentication.
     const string ExcludeTablesRegex = "";
+
+    //	Set to true for making partial class.
+    const bool UsePartialClass = true;
+
+    // Set to true for having the schema in the namespace affect the namespace.
+    // The namespace will for instance be "MyDatalayer.dbo".
+    // With value set to false the schema will be unused.
+    // The namespace will then be "MyDatalayer".
+    const bool UseSchemaForNamespace = false;
+
+    // Static constructor name.
+    // Leave blank if no static constructor should be created.
+    const string NameOfStaticConstructor = "Create";
+
 
 
     // DON'T CHANGE ANYTHING BELOW HERE UNLESS
