@@ -84,7 +84,7 @@
 		}
 		return ret;
 	}
-
+	
 	/// <summary> This method creates the namespace signature.
 	/// </summary>
 	/// <param name="namespaceName"></param>
@@ -118,7 +118,7 @@
     /// <summary> This method creates a method signature.
     /// E.g.: "private void Set( CustomerID, Name )".
     /// </summary>
-    /// <param name="scope"></param>
+    /// <param name="scope">public, internal or private.  Should this be an enum?</param>
     /// <param name="isStatic"></param>
     /// <param name="returnType"></param>
     /// <param name="methodName"></param>
@@ -128,34 +128,27 @@
     /// <returns></returns>
 	private static string CreateMethodSignature( string scope, bool isStatic, string returnType, string methodName, ColumnCollection columns, bool includePrimaryKey = true )
 	{
-		string ret = scope;
-		if( isStatic )
+		// Create a list of the method's parameters.
+		var paramList = new List<string>();
+		if( columns != null )
 		{
-			ret += " static";
-		}
-		if( false == string.IsNullOrWhiteSpace( returnType ) )
-		{
-			ret += " " + returnType;
-		}
-		ret += " " + methodName + "(";
-		if( null != columns )
-		{
-			var paramList = new List<string>();
 			foreach( Column column in columns )
 			{
-				if( column.InPrimaryKey && ! includePrimaryKey )
-				{
-					//	The column is part of the primary key and we don't want it according to parameter.
-				}
-				else
+				if( ! column.InPrimaryKey || includePrimaryKey )
 				{
 					paramList.Add( CreateMethodParameter( column ) );
 				}
 			}
-			ret += " " + string.Join( ", ", paramList.ToArray() ) + " ";
 		}
-		ret += ")";
-		return ret;
+		
+		return string.Format(
+			"{0}{1}{2} {3}( {4} )", 
+			scope, 
+			isStatic ? " static" : null, 
+			false == string.IsNullOrWhiteSpace( returnType ) ? " " + returnType : null, 
+			methodName, 
+			string.Join( ", ", paramList.ToArray() )
+			);
 	}
 
     /// <summary> This method creates all parameters for a constructor.
@@ -170,11 +163,7 @@
 		var assignmentList = new List<string>();
 		foreach( Column column in columns )
 		{
-			if( column.InPrimaryKey && ! includePrimaryKey )
-			{
-				//	The column is part of the primary key and we don't want it according to parameter.
-			}
-			else
+			if( ! column.InPrimaryKey || includePrimaryKey )
 			{
 				assignmentList.Add( column.Name + " = " + column.Name );
 			}	
