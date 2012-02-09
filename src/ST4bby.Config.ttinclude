@@ -41,6 +41,11 @@
     // Leave blank if no static constructor should be created.
     const string NameOfStaticConstructor = "Create";
 
+    // Set whether the class should inherit or implement an interface or two.
+    // Leave blank no inheritance or interface implementing is to be created.
+    // E.g.: ClassInheritFrom = "MyBaseClass, IMyInterface".
+    const string ClassInheritFrom = "SurfaceBase, ISurface";
+
 
 
     // DON'T CHANGE ANYTHING BELOW HERE UNLESS
