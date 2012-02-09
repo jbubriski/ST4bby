@@ -21,11 +21,17 @@
 
     // ...or if you want to use sql authentication fill out this variable
     string Config_ConnectionName        = @"";
+
     // CONFIGURE CODE GENERATION HERE
 
     // Regex filter for the tables that are excluded from code generation.
     // E.g.: "Applications|aspnet_.*" excludes the tables one gets with aspnet authentication.
     const string ExcludeTablesRegex = "";
+
+    //	Set to true for making partial class.
+    const bool UsePartialClass = true;
+
+
 
 
     // DON'T CHANGE ANYTHING BELOW HERE UNLESS
