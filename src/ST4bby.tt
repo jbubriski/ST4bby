@@ -6,37 +6,38 @@
 <#@ Assembly Name="Microsoft.SqlServer.Smo" #>
 <#@ Assembly Name="System.Data" #>
 <#@ Assembly Name="EnvDTE" #>
-<#@ Import Namespace="Microsoft.SqlServer.Management.Smo" #>
 <#@ Import Namespace="System.Xml.Serialization" #>
 <#@ Import Namespace="System.Linq" #>
 <#@ Import Namespace="System.Data.Common" #>
 <#@ Import Namespace="System.Text.RegularExpressions" #>
 <#@ Import Namespace="System.Collections.Generic" #>
-<#@ Import Namespace="Microsoft.SqlServer.Management.Common" #>
 <#@ import namespace="System.Diagnostics" #>
 <#@ import namespace="System.IO" #>
 <#@ import namespace="System.Text" #>
 <#@ import namespace="System.Xml" #>
 <#@ import namespace="EnvDTE" #>
+<#@ Import Namespace="Microsoft.SqlServer.Management.Smo" #>
+<#@ Import Namespace="Microsoft.SqlServer.Management.Common" #>
 <#
-  if (ConfigIsValid())
+    if ( ConfigIsValid() )
     {
-      var connectionString = GetConnectionString();
-        using(SqlConnection conn = new SqlConnection(connectionString))
+        var connectionString = GetConnectionString();
+        
+	    using( SqlConnection conn = new SqlConnection( connectionString ) )
         {
             var serverConnection = new ServerConnection(conn);
-            var tables = new Server(serverConnection).Databases[databaseName].Tables;
+            var tables = new Server(serverConnection).Databases[DatabaseName].Tables;
 
-            foreach (Table table in tables)
+            foreach( Table table in tables )
             {
-                if ( IsClassOkToGenerate( table ) )
+                if( IsClassOkToGenerate( table ) )
                 {
-                    OutputClass(nameSpaceName, table);
-                    var path = SaveOutput(table.Name + ".cs");
+                    OutputClass( NameSpaceName, table );
+                    var path = SaveOutput( table.Name + ".cs" );
                     // total hack but it adds the newly written file into the current visual studio instance
                     var project = GetCurrentProject();
 
-                    project.ProjectItems.AddFromFile(path);
+                    project.ProjectItems.AddFromFile( path );
                 }
             }
         }
@@ -58,10 +59,10 @@
     public EnvDTE.Project GetCurrentProject()
     {
         var serviceProvider             = (IServiceProvider)Host;
-        var dte                         = (EnvDTE.DTE)serviceProvider.GetService(typeof(EnvDTE.DTE));
+        var dte                         = (EnvDTE.DTE)serviceProvider.GetService( typeof( EnvDTE.DTE ) );
         var currentSlnProjects          = (Array)dte.ActiveSolutionProjects;
 
-        return (EnvDTE.Project)currentSlnProjects.GetValue(0);
+        return (EnvDTE.Project)currentSlnProjects.GetValue( 0 );
     }
 	
 	/// <summary> This method creates the signature for the class.
@@ -73,18 +74,22 @@
 	private static string CreateClassSignature( Table table, bool usePartialClass )
 	{
 		var ret = "public";
+        
 		if( usePartialClass )
 		{
 			ret += " partial";
 		}
+        
 		ret += " class " + table.Name;
+        
 		if( false == string.IsNullOrWhiteSpace( ClassInheritFrom ) )
 		{
 			ret += " : " + ClassInheritFrom;
 		}
+
 		return ret;
 	}
-	
+
 	/// <summary> This method creates the namespace signature.
 	/// </summary>
 	/// <param name="namespaceName"></param>
@@ -94,10 +99,12 @@
 	private static string CreateNamespaceSignature( string namespaceName, Table table, bool useSchemaForNamespace )
 	{
 		string ret = string.Format( "namespace {0}", namespaceName );
-		if( useSchemaForNamespace )
+
+	    if( useSchemaForNamespace )
 		{
 			ret += "." + table.Schema;
 		}
+
 		return ret;
 	}
 	
@@ -112,7 +119,7 @@
         var type             = TypeMappings.ContainsKey(column.DataType.Name) ? TypeMappings[column.DataType.Name] : "string";
         var typeFormat       = type != "string" && isNullable ? "Nullable<{0}>" : "{0}";
 
-        return String.Format("{0} {1}", String.Format(typeFormat,type), column.Name);
+        return String.Format( "{0} {1}", String.Format( typeFormat,type ), column.Name );
 	}
 
     /// <summary> This method creates a method signature.
@@ -130,6 +137,7 @@
 	{
 		// Create a list of the method's parameters.
 		var paramList = new List<string>();
+
 		if( columns != null )
 		{
 			foreach( Column column in columns )
@@ -140,7 +148,7 @@
 				}
 			}
 		}
-		
+
 		return string.Format(
 			"{0}{1}{2} {3}( {4} )", 
 			scope, 
@@ -161,6 +169,7 @@
 	private static string CreateNamedArgumentListForConstructor( ColumnCollection columns, bool includePrimaryKey = true )
 	{
 		var assignmentList = new List<string>();
+
 		foreach( Column column in columns )
 		{
 			if( ! column.InPrimaryKey || includePrimaryKey )
@@ -168,9 +177,10 @@
 				assignmentList.Add( column.Name + " = " + column.Name );
 			}	
 		}
+
 		return string.Join( "," + Environment.NewLine, assignmentList.ToArray() );
 	}
-	
+
     /// <summary> This method returns true if the table is among the ones that should generate code.
     /// Typically aren't system objects and explicitly excluded tables among those.
     /// </summary>
@@ -178,127 +188,131 @@
     /// <returns></returns>
     private bool IsClassOkToGenerate( Table table )
     {
-        if( false == string.IsNullOrWhiteSpace( ExcludeTablesRegex ) &&
-            ( table.IsSystemObject || Regex.IsMatch( table.Name, ExcludeTablesRegex ) ) )
+        if( false == string.IsNullOrWhiteSpace( ExcludeTablesRegex ) 
+            && ( table.IsSystemObject || Regex.IsMatch( table.Name, ExcludeTablesRegex ) ) )
         {
             return false;
-        }else{
+        }
+        else
+        {
             return true;
         }
     }
 
-	private string OutputProperty(Column column)
+	private string OutputProperty( Column column )
     {
         var isNullable       = column.Nullable;
         var type             = TypeMappings.ContainsKey(column.DataType.Name) ? TypeMappings[column.DataType.Name] : "string";
         var typeFormat       = type != "string" && isNullable ? "Nullable<{0}>" : "{0}";
 
-        var annotations      = GetAnnotations(column);
+        var annotations      = GetAnnotations( column );
 
-        return String.Format("{0}public {1} {2} {{ get; set; }}", annotations, String.Format(typeFormat,type), column.Name);
+        return String.Format( "{0}public {1} {2} {{ get; set; }}", annotations, String.Format( typeFormat,type ), column.Name );
     }
 
-    string GetAnnotations(Column col)
+    string GetAnnotations( Column col )
     {
-      var builder = new List<string>();
+        var builder = new List<string>();
         var canHaveLength = new string[] { "nvarchar", "varchar", "char", "nchar" };
-        if (canHaveLength.Contains(col.DataType.Name) && col.DataType.MaximumLength > -1)
-            builder.Add( String.Format("StringLength({0})", col.DataType.MaximumLength));
+
+        if (col.InPrimaryKey)
+	        builder.Add("Key");
 
         if (!col.Nullable)
             builder.Add("Required");
 
-        if (col.InPrimaryKey)
-          builder.Add("Key");
+        if( canHaveLength.Contains( col.DataType.Name ) && col.DataType.MaximumLength > -1 )
+	        builder.Add( String.Format( "StringLength({0})", col.DataType.MaximumLength ) );
 
-        var notations = String.Join(", ", builder);
-      return builder.Count > 0 ? String.Format("[{0}]{1}", notations, System.Environment.NewLine) : String.Empty;
-  }
+        var notations = String.Join( ", ", builder );
 
-    System.Collections.Generic.IEnumerable<string> GatherProperties(ColumnCollection columns)
-    {
-        foreach (Column col in columns)
-            yield return OutputProperty(col);
+        return builder.Count > 0 ? String.Format( "[{0}]{1}", notations, System.Environment.NewLine ) : String.Empty;
     }
 
-    void Out(string stuff)
+    IEnumerable<string> GatherProperties( ColumnCollection columns )
+    {
+        foreach ( Column col in columns )
+            yield return OutputProperty( col );
+    }
+
+    void Out( string stuff )
     {
 #><#= stuff + System.Environment.NewLine #><#+
     }
 
-    void Out(string stuff, params object[] args)
+    void Out( string stuff, params object[] args )
     {
-#><#= String.Format(stuff, args) + System.Environment.NewLine #><#+
+#><#= String.Format( stuff, args ) + System.Environment.NewLine #><#+
     }
 
-    string SaveOutput(string outputFileName)
+    string SaveOutput( string outputFileName )
     {
-      var content = this.GenerationEnvironment.ToString();
-      string templateDirectory = Path.GetDirectoryName(Host.TemplateFile);
-      string outputFilePath = Path.Combine(templateDirectory, outputFileName);
+        var content = this.GenerationEnvironment.ToString();
+        string templateDirectory = Path.GetDirectoryName( Host.TemplateFile );
+        string outputFilePath = Path.Combine( templateDirectory, outputFileName );
 
-        File.WriteAllText(outputFilePath, content);
+        File.WriteAllText( outputFilePath, content );
 
-      this.GenerationEnvironment.Remove(0, this.GenerationEnvironment.Length);
+        this.GenerationEnvironment.Remove( 0, this.GenerationEnvironment.Length );
 
         return outputFilePath;
     }
 
-    void OutputClass(string namespaceName, Table table)
+    void OutputClass( string namespaceName, Table table )
     {
-		Out("// This class is automatically generated by ST4bby {0}.", System.DateTime.Now.ToString());
-		Out("// Read more at https://github.com/jbubriski/ST4bby/");
-		Out("");
+		Out( "// This class was automatically generated by ST4bby {0}.", System.DateTime.Now.ToString() );
+		Out( "// Read more at https://github.com/jbubriski/ST4bby/" );
+		Out( "" );
 		Out( CreateNamespaceSignature( namespaceName, table, UseSchemaForNamespace ) );
-		Out("{");
-		PushIndent("\t");
-			Out("using System;");
-			Out("using System.ComponentModel.DataAnnotations;");
+		Out( "{" );
+		PushIndent( "\t" );
+			Out( "using System;" );
+			Out( "using System.ComponentModel.DataAnnotations;" );
 			Out( "" );
 			Out( CreateClassSignature( table, UsePartialClass ) );
-			Out("{");
-			PushIndent("\t");
+			Out( "{" );
+			PushIndent( "\t" );
 				//	Properties.
 				var properties = GatherProperties(table.Columns);
-				Out(String.Join(System.Environment.NewLine, properties));
-		
+                Out(String.Join(System.Environment.NewLine + System.Environment.NewLine, properties));
+
 				//	Static constructors.
-				if( false == string.IsNullOrWhiteSpace( NameOfStaticConstructor ) )
+				if( !string.IsNullOrWhiteSpace( NameOfStaticConstructor ) )
 				{
-					Out("");
+					Out( "" );
 			        Out( "/// <summary> This static constructor takes all fields but the primary key." );
-			        Out( "/// </summary>");
-			        Out( "/// <returns></returns>");
+			        Out( "/// </summary>" );
+			        Out( "/// <returns></returns>" );
 					Out( CreateMethodSignature( "public", true, table.Name, NameOfStaticConstructor, table.Columns, includePrimaryKey : false ) );
-					Out("{");
-					PushIndent("\t");
+					Out( "{" );
+					PushIndent("\t" );
 						Out( "return new " + table.Name + "()" );
 						Out( "{" );
-						PushIndent("\t");
+						PushIndent( "\t" );
 							Out( CreateNamedArgumentListForConstructor( table.Columns, includePrimaryKey : false ) );
 						PopIndent();
 						Out( "};" );
 					PopIndent();
-					Out("}");
-					Out("");
+					Out( "}" );
+					Out( "" );
 			        Out( "/// <summary> This static constructor takes all fields including the primary key." );
-			        Out( "/// </summary>");
-			        Out( "/// <returns></returns>");
+			        Out( "/// </summary>" );
+			        Out( "/// <returns></returns>" );
 					Out( CreateMethodSignature( "public", true, table.Name, NameOfStaticConstructor, table.Columns ) );
-					Out("{");
-					PushIndent("\t");
+					Out( "{" );
+					PushIndent( "\t" );
 						Out( "return new " + table.Name + "()" );
 						Out( "{" );
-						PushIndent("\t");
+						PushIndent( "\t" );
 							Out( CreateNamedArgumentListForConstructor( table.Columns, includePrimaryKey : true ) );
 						PopIndent();
 						Out( "};" );
 					PopIndent();
-					Out("}");
+					Out( "}" );
 				}
 			PopIndent();
-			Out("}");
+			Out( "}" );
 		PopIndent();
-		Out("}");
+		Out( "}" );
     }
 #>

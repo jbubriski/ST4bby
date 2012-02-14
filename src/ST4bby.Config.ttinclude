@@ -8,12 +8,11 @@
 <#@ import namespace="System.Data.Common" #>
 <#@ import namespace="System.Configuration" #>
 <#+
-
     // CONFIGURE YOUR DATABASE SETTINGS HERE
 
-    string nameSpaceName                = @"";
-    string serverName                   = @".\sqlexpress";
-    string databaseName                 = @"";
+    string NameSpaceName                = @"";
+    string ServerName                   = @".\sqlexpress";
+    string DatabaseName                 = @"";
 
     // If you want to use sql authentication fill out these two variables...
     string SqlAuth_Username             = @"";
@@ -39,12 +38,12 @@
 
     // Static constructor name.
     // Leave blank if no static constructor should be created.
-    const string NameOfStaticConstructor = "Create";
+    const string NameOfStaticConstructor = "";
 
     // Set whether the class should inherit or implement an interface or two.
     // Leave blank no inheritance or interface implementing is to be created.
     // E.g.: ClassInheritFrom = "MyBaseClass, IMyInterface".
-    const string ClassInheritFrom = "SurfaceBase, ISurface";
+    const string ClassInheritFrom = "";
 
 
 
@@ -56,20 +55,23 @@
 
     bool ConfigIsValid()
     {
-        return !string.IsNullOrWhiteSpace(nameSpaceName)
-                    && !string.IsNullOrWhiteSpace(serverName)
-                    && !string.IsNullOrWhiteSpace(databaseName);
+        return !string.IsNullOrWhiteSpace( NameSpaceName )
+            && !string.IsNullOrWhiteSpace( ServerName )
+            && !string.IsNullOrWhiteSpace( DatabaseName );
     }
 
     string GetConnectionString()
     {
-      string conn = String.Format(TrustedConnectionString, serverName, databaseName);
-        if( !String.IsNullOrWhiteSpace(SqlAuth_Username) )
-            conn = String.Format(SqlAuthConnectionString, serverName, databaseName, SqlAuth_Username, SqlAuth_Password);
+        string conn = String.Format( TrustedConnectionString, ServerName, DatabaseName );
+
+        if ( !String.IsNullOrWhiteSpace( SqlAuth_Username ) )
+        {
+	       conn = String.Format(SqlAuthConnectionString, ServerName, DatabaseName, SqlAuth_Username, SqlAuth_Password);
+        }
         else if (!String.IsNullOrWhiteSpace(Config_ConnectionName))
         {
             var configFile = new ExeConfigurationFileMap { ExeConfigFilename = GetRootProjectDirectory() };
-            var config = System.Configuration.ConfigurationManager.OpenMappedExeConfiguration(configFile, ConfigurationUserLevel.None);
+            var config = System.Configuration.ConfigurationManager.OpenMappedExeConfiguration( configFile, ConfigurationUserLevel.None );
             conn = config.ConnectionStrings.ConnectionStrings[Config_ConnectionName].ConnectionString;
         }
 
@@ -77,25 +79,30 @@
     }
 
     int recurseCount = 0;
-    string GetRootProjectDirectory(string root = null)
+    
+    string GetRootProjectDirectory( string root = null )
     {
-      ++recurseCount;
-        if (root == null)
+        ++recurseCount;
+        
+	    if ( root == null )
         {
-          recurseCount = 0;
+            recurseCount = 0;
             root = Host.TemplateFile;
         }
-      string templateDirectory = Path.GetDirectoryName(root);
-        var files = Directory.GetFiles(templateDirectory, "app.config", SearchOption.TopDirectoryOnly) ??
-                  Directory.GetFiles(templateDirectory, "web.config", SearchOption.TopDirectoryOnly);
 
-        if (files == null)
+        string templateDirectory = Path.GetDirectoryName(root);
+
+        var files = Directory.GetFiles( templateDirectory, "app.config", SearchOption.TopDirectoryOnly ) ??
+                    Directory.GetFiles( templateDirectory, "web.config", SearchOption.TopDirectoryOnly );
+
+        if ( files == null )
         {
-          if (recurseCount < 100)
+            if (recurseCount < 100)
             {
-             templateDirectory = GetRootProjectDirectory(Directory.GetParent(templateDirectory).FullName);
+                templateDirectory = GetRootProjectDirectory( Directory.GetParent( templateDirectory ).FullName );
             }
         }
-        return Path.Combine(templateDirectory, files[0]);
+
+        return Path.Combine( templateDirectory, files[0] );
     }
 #>
