@@ -10,6 +10,7 @@
 <#+
     // CONFIGURE YOUR DATABASE SETTINGS HERE
 
+    // Required settings:
     string NameSpaceName                = @"";
     string ServerName                   = @".\sqlexpress";
     string DatabaseName                 = @"";
@@ -28,7 +29,7 @@
     const string ExcludeTablesRegex = "";
 
     //	Set to true for making partial class.
-    const bool UsePartialClass = true;
+    const bool UsePartialClass = false;
 
     // Set to true for having the schema in the namespace affect the namespace.
     // The namespace will for instance be "MyDatalayer.dbo".
@@ -64,11 +65,11 @@
     {
         string conn = String.Format( TrustedConnectionString, ServerName, DatabaseName );
 
-        if ( !String.IsNullOrWhiteSpace( SqlAuth_Username ) )
+        if( !String.IsNullOrWhiteSpace( SqlAuth_Username ) )
         {
-	       conn = String.Format(SqlAuthConnectionString, ServerName, DatabaseName, SqlAuth_Username, SqlAuth_Password);
+           conn = String.Format(SqlAuthConnectionString, ServerName, DatabaseName, SqlAuth_Username, SqlAuth_Password);
         }
-        else if (!String.IsNullOrWhiteSpace(Config_ConnectionName))
+        else if(!String.IsNullOrWhiteSpace(Config_ConnectionName))
         {
             var configFile = new ExeConfigurationFileMap { ExeConfigFilename = GetRootProjectDirectory() };
             var config = System.Configuration.ConfigurationManager.OpenMappedExeConfiguration( configFile, ConfigurationUserLevel.None );
@@ -84,7 +85,7 @@
     {
         ++recurseCount;
         
-	    if ( root == null )
+        if( root == null )
         {
             recurseCount = 0;
             root = Host.TemplateFile;
@@ -95,9 +96,9 @@
         var files = Directory.GetFiles( templateDirectory, "app.config", SearchOption.TopDirectoryOnly ) ??
                     Directory.GetFiles( templateDirectory, "web.config", SearchOption.TopDirectoryOnly );
 
-        if ( files == null )
+        if( files == null )
         {
-            if (recurseCount < 100)
+            if(recurseCount < 100)
             {
                 templateDirectory = GetRootProjectDirectory( Directory.GetParent( templateDirectory ).FullName );
             }

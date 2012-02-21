@@ -19,11 +19,11 @@
 <#@ Import Namespace="Microsoft.SqlServer.Management.Smo" #>
 <#@ Import Namespace="Microsoft.SqlServer.Management.Common" #>
 <#
-    if ( ConfigIsValid() )
+    if( ConfigIsValid() )
     {
         var connectionString = GetConnectionString();
         
-	    using( SqlConnection conn = new SqlConnection( connectionString ) )
+        using( SqlConnection conn = new SqlConnection( connectionString ) )
         {
             var serverConnection = new ServerConnection(conn);
             var tables = new Server(serverConnection).Databases[DatabaseName].Tables;
@@ -44,7 +44,7 @@
     }
 #>
 <#+
-	
+    
     private readonly static Dictionary<string, string> TypeMappings = new Dictionary<string, string> 
     {
         { "bit","bool" },           { "uniqueidentifier","Guid" },
@@ -53,9 +53,8 @@
         { "bigint","long" },        { "varchar","string" },
         { "nchar","char" },         { "char","char" },
         { "nvarchar","string" },    { "text","string" },
-        { "ntext","string" }
     };
-	
+    
     public EnvDTE.Project GetCurrentProject()
     {
         var serviceProvider             = (IServiceProvider)Host;
@@ -64,63 +63,63 @@
 
         return (EnvDTE.Project)currentSlnProjects.GetValue( 0 );
     }
-	
-	/// <summary> This method creates the signature for the class.
+    
+    /// <summary> This method creates the signature for the class.
     /// E.g.: public partial class Customer()
     /// </summary>
     /// <param name="table"></param>
     /// <param name="usePartialClass"></param>
     /// <returns></returns>
-	private static string CreateClassSignature( Table table, bool usePartialClass )
-	{
-		var ret = "public";
+    private static string CreateClassSignature( Table table, bool usePartialClass )
+    {
+        var ret = "public";
         
-		if( usePartialClass )
-		{
-			ret += " partial";
-		}
+        if( usePartialClass )
+        {
+            ret += " partial";
+        }
         
-		ret += " class " + table.Name;
+        ret += " class " + table.Name;
         
-		if( false == string.IsNullOrWhiteSpace( ClassInheritFrom ) )
-		{
-			ret += " : " + ClassInheritFrom;
-		}
+        if( false == string.IsNullOrWhiteSpace( ClassInheritFrom ) )
+        {
+            ret += " : " + ClassInheritFrom;
+        }
 
-		return ret;
-	}
+        return ret;
+    }
 
-	/// <summary> This method creates the namespace signature.
-	/// </summary>
-	/// <param name="namespaceName"></param>
-	/// <param name="table"></param>
-	/// <param name="useSchemaForNamespace"></param>
-	/// <returns></returns>
-	private static string CreateNamespaceSignature( string namespaceName, Table table, bool useSchemaForNamespace )
-	{
-		string ret = string.Format( "namespace {0}", namespaceName );
+    /// <summary> This method creates the namespace signature.
+    /// </summary>
+    /// <param name="namespaceName"></param>
+    /// <param name="table"></param>
+    /// <param name="useSchemaForNamespace"></param>
+    /// <returns></returns>
+    private static string CreateNamespaceSignature( string namespaceName, Table table, bool useSchemaForNamespace )
+    {
+        string ret = string.Format( "namespace {0}", namespaceName );
 
-	    if( useSchemaForNamespace )
-		{
-			ret += "." + table.Schema;
-		}
+        if( useSchemaForNamespace )
+        {
+            ret += "." + table.Schema;
+        }
 
-		return ret;
-	}
-	
+        return ret;
+    }
+    
     /// <summary> This method creates a parameter for a method from a column.
     /// E.g.: "int CustomerID" or "string Name".
     /// </summary>
     /// <param name="column"></param>
     /// <returns></returns>
-	private static string CreateMethodParameter( Column column )
-	{
+    private static string CreateMethodParameter( Column column )
+    {
         var isNullable       = column.Nullable;
         var type             = TypeMappings.ContainsKey(column.DataType.Name) ? TypeMappings[column.DataType.Name] : "string";
         var typeFormat       = type != "string" && isNullable ? "Nullable<{0}>" : "{0}";
 
         return String.Format( "{0} {1}", String.Format( typeFormat,type ), column.Name );
-	}
+    }
 
     /// <summary> This method creates a method signature.
     /// E.g.: "private void Set( CustomerID, Name )".
@@ -133,31 +132,31 @@
     /// <param name="includePrimaryKey">Whether the primary key should be included or not.
     /// New objects often can't have the PK set at the client, only in the database.</param>
     /// <returns></returns>
-	private static string CreateMethodSignature( string scope, bool isStatic, string returnType, string methodName, ColumnCollection columns, bool includePrimaryKey = true )
-	{
-		// Create a list of the method's parameters.
-		var paramList = new List<string>();
+    private static string CreateMethodSignature( string scope, bool isStatic, string returnType, string methodName, ColumnCollection columns, bool includePrimaryKey = true )
+    {
+        // Create a list of the method's parameters.
+        var paramList = new List<string>();
 
-		if( columns != null )
-		{
-			foreach( Column column in columns )
-			{
-				if( ! column.InPrimaryKey || includePrimaryKey )
-				{
-					paramList.Add( CreateMethodParameter( column ) );
-				}
-			}
-		}
+        if( columns != null )
+        {
+            foreach( Column column in columns )
+            {
+                if( ! column.InPrimaryKey || includePrimaryKey )
+                {
+                    paramList.Add( CreateMethodParameter( column ) );
+                }
+            }
+        }
 
-		return string.Format(
-			"{0}{1}{2} {3}( {4} )", 
-			scope, 
-			isStatic ? " static" : null, 
-			false == string.IsNullOrWhiteSpace( returnType ) ? " " + returnType : null, 
-			methodName, 
-			string.Join( ", ", paramList.ToArray() )
-			);
-	}
+        return string.Format(
+            "{0}{1}{2} {3}( {4} )", 
+            scope, 
+            isStatic ? " static" : null, 
+            false == string.IsNullOrWhiteSpace( returnType ) ? " " + returnType : null, 
+            methodName, 
+            string.Join( ", ", paramList.ToArray() )
+            );
+    }
 
     /// <summary> This method creates all parameters for a constructor.
     /// It is not necessarily only for constructor use.  A method like "Set( CustomerID, Name, ...)"
@@ -166,20 +165,20 @@
     /// <param name="columns"></param>
     /// <param name="includePrimaryKey"></param>
     /// <returns></returns>
-	private static string CreateNamedArgumentListForConstructor( ColumnCollection columns, bool includePrimaryKey = true )
-	{
-		var assignmentList = new List<string>();
+    private static string CreateNamedArgumentListForConstructor( ColumnCollection columns, bool includePrimaryKey = true )
+    {
+        var assignmentList = new List<string>();
 
-		foreach( Column column in columns )
-		{
-			if( ! column.InPrimaryKey || includePrimaryKey )
-			{
-				assignmentList.Add( column.Name + " = " + column.Name );
-			}	
-		}
+        foreach( Column column in columns )
+        {
+            if( ! column.InPrimaryKey || includePrimaryKey )
+            {
+                assignmentList.Add( column.Name + " = " + column.Name );
+            }	
+        }
 
-		return string.Join( "," + Environment.NewLine, assignmentList.ToArray() );
-	}
+        return string.Join( "," + Environment.NewLine, assignmentList.ToArray() );
+    }
 
     /// <summary> This method returns true if the table is among the ones that should generate code.
     /// Typically aren't system objects and explicitly excluded tables among those.
@@ -199,7 +198,7 @@
         }
     }
 
-	private string OutputProperty( Column column )
+    private string OutputProperty( Column column )
     {
         var isNullable       = column.Nullable;
         var type             = TypeMappings.ContainsKey(column.DataType.Name) ? TypeMappings[column.DataType.Name] : "string";
@@ -215,14 +214,14 @@
         var builder = new List<string>();
         var canHaveLength = new string[] { "nvarchar", "varchar", "char", "nchar" };
 
-        if (col.InPrimaryKey)
-	        builder.Add("Key");
+        if(col.InPrimaryKey)
+            builder.Add("Key");
 
-        if (!col.Nullable)
+        if(!col.Nullable)
             builder.Add("Required");
 
         if( canHaveLength.Contains( col.DataType.Name ) && col.DataType.MaximumLength > -1 )
-	        builder.Add( String.Format( "StringLength({0})", col.DataType.MaximumLength ) );
+            builder.Add( String.Format( "StringLength({0})", col.DataType.MaximumLength ) );
 
         var notations = String.Join( ", ", builder );
 
@@ -260,59 +259,59 @@
 
     void OutputClass( string namespaceName, Table table )
     {
-		Out( "// This class was automatically generated by ST4bby {0}.", System.DateTime.Now.ToString() );
-		Out( "// Read more at https://github.com/jbubriski/ST4bby/" );
-		Out( "" );
-		Out( CreateNamespaceSignature( namespaceName, table, UseSchemaForNamespace ) );
-		Out( "{" );
-		PushIndent( "\t" );
-			Out( "using System;" );
-			Out( "using System.ComponentModel.DataAnnotations;" );
-			Out( "" );
-			Out( CreateClassSignature( table, UsePartialClass ) );
-			Out( "{" );
-			PushIndent( "\t" );
-				//	Properties.
-				var properties = GatherProperties(table.Columns);
+        Out( "// This class was automatically generated by ST4bby {0}.", System.DateTime.Now.ToString() );
+        Out( "// Read more at https://github.com/jbubriski/ST4bby/" );
+        Out( "" );
+        Out( CreateNamespaceSignature( namespaceName, table, UseSchemaForNamespace ) );
+        Out( "{" );
+        PushIndent( "\t" );
+            Out( "using System;" );
+            Out( "using System.ComponentModel.DataAnnotations;" );
+            Out( "" );
+            Out( CreateClassSignature( table, UsePartialClass ) );
+            Out( "{" );
+            PushIndent( "\t" );
+                //	Properties.
+                var properties = GatherProperties(table.Columns);
                 Out(String.Join(System.Environment.NewLine + System.Environment.NewLine, properties));
 
-				//	Static constructors.
-				if( !string.IsNullOrWhiteSpace( NameOfStaticConstructor ) )
-				{
-					Out( "" );
-			        Out( "/// <summary> This static constructor takes all fields but the primary key." );
-			        Out( "/// </summary>" );
-			        Out( "/// <returns></returns>" );
-					Out( CreateMethodSignature( "public", true, table.Name, NameOfStaticConstructor, table.Columns, includePrimaryKey : false ) );
-					Out( "{" );
-					PushIndent("\t" );
-						Out( "return new " + table.Name + "()" );
-						Out( "{" );
-						PushIndent( "\t" );
-							Out( CreateNamedArgumentListForConstructor( table.Columns, includePrimaryKey : false ) );
-						PopIndent();
-						Out( "};" );
-					PopIndent();
-					Out( "}" );
-					Out( "" );
-			        Out( "/// <summary> This static constructor takes all fields including the primary key." );
-			        Out( "/// </summary>" );
-			        Out( "/// <returns></returns>" );
-					Out( CreateMethodSignature( "public", true, table.Name, NameOfStaticConstructor, table.Columns ) );
-					Out( "{" );
-					PushIndent( "\t" );
-						Out( "return new " + table.Name + "()" );
-						Out( "{" );
-						PushIndent( "\t" );
-							Out( CreateNamedArgumentListForConstructor( table.Columns, includePrimaryKey : true ) );
-						PopIndent();
-						Out( "};" );
-					PopIndent();
-					Out( "}" );
-				}
-			PopIndent();
-			Out( "}" );
-		PopIndent();
-		Out( "}" );
+                //	Static constructors.
+                if( !string.IsNullOrWhiteSpace( NameOfStaticConstructor ) )
+                {
+                    Out( "" );
+                    Out( "/// <summary> This static constructor takes all fields but the primary key." );
+                    Out( "/// </summary>" );
+                    Out( "/// <returns></returns>" );
+                    Out( CreateMethodSignature( "public", true, table.Name, NameOfStaticConstructor, table.Columns, includePrimaryKey : false ) );
+                    Out( "{" );
+                    PushIndent("\t" );
+                        Out( "return new " + table.Name + "()" );
+                        Out( "{" );
+                        PushIndent( "\t" );
+                            Out( CreateNamedArgumentListForConstructor( table.Columns, includePrimaryKey : false ) );
+                        PopIndent();
+                        Out( "};" );
+                    PopIndent();
+                    Out( "}" );
+                    Out( "" );
+                    Out( "/// <summary> This static constructor takes all fields including the primary key." );
+                    Out( "/// </summary>" );
+                    Out( "/// <returns></returns>" );
+                    Out( CreateMethodSignature( "public", true, table.Name, NameOfStaticConstructor, table.Columns ) );
+                    Out( "{" );
+                    PushIndent( "\t" );
+                        Out( "return new " + table.Name + "()" );
+                        Out( "{" );
+                        PushIndent( "\t" );
+                            Out( CreateNamedArgumentListForConstructor( table.Columns, includePrimaryKey : true ) );
+                        PopIndent();
+                        Out( "};" );
+                    PopIndent();
+                    Out( "}" );
+                }
+            PopIndent();
+            Out( "}" );
+        PopIndent();
+        Out( "}" );
     }
 #>
