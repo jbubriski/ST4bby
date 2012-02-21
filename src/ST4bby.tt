@@ -47,12 +47,19 @@
     
     private readonly static Dictionary<string, string> TypeMappings = new Dictionary<string, string> 
     {
-        { "bit","bool" },           { "uniqueidentifier","Guid" },
-        { "datetime","DateTime" },  { "datetime2","DateTime" },
-        { "int","int" },            { "smallint","short" },
-        { "bigint","long" },        { "varchar","string" },
-        { "nchar","char" },         { "char","char" },
-        { "nvarchar","string" },    { "text","string" },
+        { "bit","bool" },
+        { "uniqueidentifier","Guid" },
+        { "datetime","DateTime" },
+        { "datetime2","DateTime" },
+        { "int","int" },
+        { "smallint","short" },
+        { "bigint","long" },
+        { "varchar","string" },
+        { "nchar","char" },
+        { "char","char" },
+        { "nvarchar","string" },
+        { "text","string" },
+        { "decimal", "decimal" }
     };
     
     public EnvDTE.Project GetCurrentProject()
@@ -187,7 +194,7 @@
     /// <returns></returns>
     private bool IsClassOkToGenerate( Table table )
     {
-        if( false == string.IsNullOrWhiteSpace( ExcludeTablesRegex ) 
+        if( !string.IsNullOrWhiteSpace( ExcludeTablesRegex ) 
             && ( table.IsSystemObject || Regex.IsMatch( table.Name, ExcludeTablesRegex ) ) )
         {
             return false;
@@ -248,7 +255,7 @@
     {
         var content = this.GenerationEnvironment.ToString();
         string templateDirectory = Path.GetDirectoryName( Host.TemplateFile );
-        string outputFilePath = Path.Combine( templateDirectory, outputFileName );
+        string outputFilePath = Path.Combine( templateDirectory, TargetPath, outputFileName );
 
         File.WriteAllText( outputFilePath, content );
 

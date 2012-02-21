@@ -25,7 +25,7 @@
     // CONFIGURE CODE GENERATION HERE
 
     // Regex filter for the tables that are excluded from code generation.
-    // E.g.: "Applications|aspnet_.*" excludes the tables one gets with aspnet authentication.
+    // E.g.: "Applications|aspnet_.*" would exclude the tables for the ASP.NET Membership Provider.
     const string ExcludeTablesRegex = "";
 
     //	Set to true for making partial class.
@@ -45,6 +45,12 @@
     // Leave blank no inheritance or interface implementing is to be created.
     // E.g.: ClassInheritFrom = "MyBaseClass, IMyInterface".
     const string ClassInheritFrom = "";
+
+    // The Path to the 
+    // E.g.:
+    //     Models
+    //     Models/SubModels
+    const string TargetPath = "Models";
 
 
 
