@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
     <meta charset='utf-8'>
@@ -7,9 +7,9 @@
         body
         {
             margin-top: 1.0em;
-            background-color: #992f00;
+            background-color: #fff;
             font-family: Helvetica, Arial, FreeSans, san-serif;
-            color: #ffffff;
+            color: #333;
         }
         #container
         {
@@ -19,7 +19,7 @@
         h1
         {
             font-size: 3.8em;
-            color: #66d0ff;
+            color: #992f00;
             margin-bottom: 3px;
         }
         h1 .small
@@ -33,16 +33,16 @@
         h2
         {
             font-size: 1.5em;
-            color: #66d0ff;
+            color: #992f00;
         }
         h3
         {
             text-align: center;
-            color: #66d0ff;
+            color: #992f00;
         }
         a
         {
-            color: #66d0ff;
+            color: #992f00;
         }
         .description
         {
@@ -58,7 +58,6 @@
         pre
         {
             color: #992f00;
-            background: #fff;
             padding: 15px;
         }
         pre.rob
@@ -91,84 +90,101 @@
             <a href="https://github.com/jbubriski/ST4bby/tarball/master">
                 <img border="0" width="90" src="https://github.com/images/modules/download/tar.png"></a>
         </div>
-        <h1>
-            <a href="https://github.com/jbubriski/ST4bby">ST4bby</a> <span class="small">("Stabby")</span>
+        <h1><a href="https://github.com/jbubriski/ST4bby">ST4bby</a> <span class="small">("Stabby")</span>
             <br />
             <span class="small">by <a href="https://github.com/jbubriski">jbubriski</a> and <a
-                href="https://github.com/codeimpossible">codeimpossible</a></span>
-        </h1>
+                href="https://github.com/codeimpossible">codeimpossible</a></span> </h1>
         <div class="description">
             ST4bby (A **S**tandalone **T4** POCO Generator)
         </div>
         <p>
-            ST4bby is a T4 template (actually 2 right now) that will generate POCO's (Plain
-            Old CLR Objects) from your database tables and columns. It doesn't rely on any particular
-            ORM, but can be used in conjunction with them, including but not limited to</p>
+            ST4bby is a T4 template that will generate POCO's (Plain Old CLR Objects) from your
+            database tables and columns. It doesn't rely on any particular ORM but can be used
+            in conjunction with them, including but not limited to:</p>
         <ol>
             <li>Entity Framework</li>
             <li>Dapper</li>
             <li>Massive</li>
             <li>Anything else that uses POCO's relating directly to your database schema.</li>
         </ol>
-        <h2>
-            Limitations:</h2>
-        <ol>
-            <li>Generates POCO's for all tables in the database (no automatic filtering). Ideally
-                a schema, prefix, or regex filter would be nice.</li>
-            <li>The only Data Annotation attribute that is currently added is the Key attribute.
-                Ideally we will support all related validation attributes.</li>
-        </ol>
-        <h2>
-            Dependencies</h2>
+        <h2>Features</h2>
+        <ul>
+            <li>SQL Server and Integrated Windows authentication</li>
+            <li>Table exclusions/inclusions via regex</li>
+            <li>Data Annoations support</li>
+            <li>Output filename customization</li>
+            <li>Partial classes</li>
+            <li>Namespaces</li>
+            <li>Static constructors</li>
+            <li>Class inheritance</li>
+            <li>Custom output location</li>
+        </ul>
+        <h2>How do I use it?</h2>
+        <p>
+            Here is all you need to do:</p>
+        <ul>
+            <li>Drop the 2 T4 templates into your Visual Studio Project (Coming soon to NuGet).</li>
+            <li>Open up the "ST4bby.Config.ttinclude" template.</li>
+            <li>Set your own values for the NameSpaceName, ServerName, and DatabaseName (Optionally
+                you can set the connection string name from your web/app.config OR you can manually
+                set the the username and password for SQL Server authentication).</li>
+            <li>Save the template and it should prompt you to run. Just hit OK and watch the magic
+                happen!</li>
+        </ul>
+        <p>
+            After that, you can continue to run the T4 template as you update the database,
+            or you can delete the T4 templates and keep the POCO's.</p>
+        <h2>Limitations:</h2>
+        <p>
+            Currently there are no major limitations, but there may be some issues surrounding
+            decimal support. Decimals are supported, but the differences in the lengths of the
+            SQL Server equivalent datatypes may cause issues. If you're storing "big" numbers,
+            make sure they don't get truncated when going into SQL Server.</p>
+        <p>
+            Only a few Data Annotation attributes are currently supported (Key, Required, and
+            StringLength). Ideally we will support all related validation attributes (if there
+            are in fact more).</p>
+        <h2>Dependencies</h2>
         <p>
             SQL Server Management Objects (SMO) available for free via the Web Platform Installer.</p>
-        <h2>
-            Install</h2>
+        <h2>Contributing</h2>
         <p>
-            Here is all you need to do:
-            <ol>
-                <li>Drop the 2 T4 templates into your Visual Studio Project (Coming soon to NuGet).</li>
-                <li>Open up the "ST4bby.Config.ttinclude.tt" template.</li>
-                <li>Set your own values for the nameSpaceName, serverName, and databaseName (If you're
-                    using SQL Server authentication, make sure you set the username and password, OR
-                    the connection string name from your web/app.config).</li>
-                <li>Save the template and it should prompt you to run! Just hit OK and watch the magic
-                    happen!</li>
-            </ol>
-            <p>
-                After that, you can continue to run the T4 template as you update the database,
-                or you can delete the templates and keep the POCO's.</p>
-            <h2>
-                Authors</h2>
-            <p>
-                John Bubriski (bubriski@gmail.com)
-                <br />
-                Jared Barboza (jared.m.barboza@gmail.com)
-                <br />
-            </p>
-            <h2>
-                Contact</h2>
-            <p>
-                John Bubriski (bubriski@gmail.com)
-                <br />
-                Jared Barboza (jared.m.barboza@gmail.com)</p>
-            <h2>
-                Download</h2>
-            <p>
-                You can download this project in either <a href="https://github.com/jbubriski/ST4bby/zipball/master">
-                    zip</a> or <a href="https://github.com/jbubriski/ST4bby/tarball/master">tar
-                formats.
-            </p>
-            <p>
-                You can also clone the project with <a href="http://git-scm.com">Git</a> by running:
-                <pre>$ git clone git://github.com/jbubriski/ST4bby</pre>
-            </p>
-            <div class="footer">
-                get the source code on GitHub : <a href="https://github.com/jbubriski/ST4bby">jbubriski/ST4bby</a>
-            </div>
-            <h1>
-                HA HAAAAAAAAA!!!</h1>
-            <pre class="rob">
+            Please don't be afraid to contribute, but because of the sensitive nature of T4
+            here are a some guidelines:
+        </p>
+        <ol>
+            <li>It's tempting, but I wouldn't recommend use of the Visual Studio Extensions for
+                syntax highlighting and intellisense. Unfortunately it seems like most of the extensions
+                have some major issues with formatting and report misleading errors (or maybe that's
+                just a T4 thing). Our recommendation is to use a 3rd party editor like Notepad++
+                to enable syntax highlighting and use a test app for intellisense when you need
+                it.</li>
+            <li>To help keep the diffs clean make sure you only change what's needed and use spaces
+                instead of tabs. Again, extensions tend to fubar the whitespace, so be careful and
+                check your diffs before submitting pull requests.</li>
+        </ol>
+        <h2>Authors / Contact</h2>
+        <p>
+            John Bubriski (bubriski@gmail.com)
+            <br />
+            Jared Barboza (jared.m.barboza@gmail.com)
+            <br />
+        </p>
+        <h2>Download</h2>
+        <p>
+            You can download this project in either <a href="https://github.com/jbubriski/ST4bby/zipball/master">
+                zip</a> or <a href="https://github.com/jbubriski/ST4bby/tarball/master">tar
+            formats.
+        </p>
+        <p>
+            You can also clone the project with <a href="http://git-scm.com">Git</a> by running:
+            <pre>$ git clone git://github.com/jbubriski/ST4bby</pre>
+        </p>
+        <div class="footer">
+            get the source code on GitHub : <a href="https://github.com/jbubriski/ST4bby">jbubriski/ST4bby</a>
+        </div>
+        <h1>HA HAAAAAAAAA!!!</h1>
+        <pre class="rob">
     ..............................................................................................................................
     ............................  ....:.:... .....................................................................................
     ....................... ::::ccccccccccccccc. ................. .. .:ccccccc:..................................................
