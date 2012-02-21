@@ -199,10 +199,19 @@
         {
             return false;
         }
+        else if( !string.IsNullOrWhiteSpace( IncludeTablesRegex ) )
+        {
+            if( Regex.IsMatch( table.Name, IncludeTablesRegex ) )
+            {
+                return true;
+            }
+        }
         else
         {
             return true;
         }
+
+        return false;
     }
 
     private string OutputProperty( Column column )

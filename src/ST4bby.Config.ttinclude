@@ -28,6 +28,11 @@
     // E.g.: "Applications|aspnet_.*" would exclude the tables for the ASP.NET Membership Provider.
     const string ExcludeTablesRegex = "";
 
+    // Regex filter for the tables that are included for code generation.
+    // Note: Exclusions take precedene over inclusions.
+    // E.g.: "Applications|aspnet_.*" would include the tables for the ASP.NET Membership Provider.
+    const string IncludeTablesRegex = "MFG.*";
+
     //	Set to true for making partial class.
     const bool UsePartialClass = false;
 
