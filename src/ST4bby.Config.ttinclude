@@ -33,7 +33,16 @@
     // E.g.: "Applications|aspnet_.*" would include the tables for the ASP.NET Membership Provider.
     const string IncludeTablesRegex = "MFG.*";
 
-    //	Set to true for making partial class.
+    // The format for the class file name.
+    // By default ST4bby uses the following format: {schema}.{tablename}
+    // You can use the following data points:
+    //   {schema} -> the schema of your table e.g. "dbo"
+    //   {table} -> the name of your table
+    //   {database} -> the name of your database
+    // ".cs" will be used as the file extension if it is not present at the end of the format
+    const string FileNameFormat = "{database}.{schema}.{table}.cs";
+
+    // Set to true for making partial class.
     const bool UsePartialClass = false;
 
     // Set to true for having the schema in the namespace affect the namespace.

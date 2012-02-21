@@ -33,7 +33,11 @@
                 if( IsClassOkToGenerate( table ) )
                 {
                     OutputClass( NameSpaceName, table );
-                    var path = SaveOutput( table.Name + ".cs" );
+                    var fileName = FileNameFormat.Replace( "{table}", table.Name ).Replace( "{schema}", table.Schema ).Replace( "{database}", DatabaseName );
+                    if( !fileName.EndsWith(".cs") )
+                        fileName += ".cs";
+
+                    var path = SaveOutput( fileName );
                     // total hack but it adds the newly written file into the current visual studio instance
                     var project = GetCurrentProject();
 
@@ -181,7 +185,7 @@
             if( ! column.InPrimaryKey || includePrimaryKey )
             {
                 assignmentList.Add( column.Name + " = " + column.Name );
-            }	
+            }
         }
 
         return string.Join( "," + Environment.NewLine, assignmentList.ToArray() );
@@ -287,11 +291,11 @@
             Out( CreateClassSignature( table, UsePartialClass ) );
             Out( "{" );
             PushIndent( "\t" );
-                //	Properties.
+                // Properties.
                 var properties = GatherProperties(table.Columns);
                 Out(String.Join(System.Environment.NewLine + System.Environment.NewLine, properties));
 
-                //	Static constructors.
+                // Static constructors.
                 if( !string.IsNullOrWhiteSpace( NameOfStaticConstructor ) )
                 {
                     Out( "" );
