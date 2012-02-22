@@ -243,6 +243,27 @@
         if(!col.Nullable)
             builder.Add("Required");
 
+        var classDisplayName = col.Name;
+
+        for (int i = 1; i < classDisplayName.Length - 1; i++)
+        {
+            if (classDisplayName[i].ToString() == char.ToUpper(classDisplayName[i]).ToString()
+                && classDisplayName[i + 1].ToString() != char.ToUpper(classDisplayName[i + 1]).ToString())
+            {
+                classDisplayName = classDisplayName.Substring(0, i) + " " + classDisplayName.Substring(i, classDisplayName.Length - i);
+                i++;
+            }
+            else if (classDisplayName[i].ToString() != " " && classDisplayName[i + 1].ToString() != " " 
+                && classDisplayName[i].ToString() != char.ToUpper(classDisplayName[i]).ToString()
+                && classDisplayName[i + 1].ToString() == char.ToUpper(classDisplayName[i + 1]).ToString())
+            {
+                classDisplayName = classDisplayName.Substring(0, i + 1) + " " + classDisplayName.Substring(i + 1, classDisplayName.Length - i - 1);
+                i += 2;
+            }
+        }
+
+        builder.Add(String.Format(@"Display(Name=""{0}"")", classDisplayName));
+
         if( canHaveLength.Contains( col.DataType.Name ) && col.DataType.MaximumLength > -1 )
             builder.Add( String.Format( "StringLength({0})", col.DataType.MaximumLength ) );
 
