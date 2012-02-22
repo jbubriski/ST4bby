@@ -55,6 +55,7 @@
         { "uniqueidentifier","Guid" },
         { "datetime","DateTime" },
         { "datetime2","DateTime" },
+        { "smalldatetime","DateTime" },
         { "int","int" },
         { "smallint","short" },
         { "bigint","long" },
@@ -63,7 +64,9 @@
         { "char","char" },
         { "nvarchar","string" },
         { "text","string" },
-        { "decimal", "decimal" }
+        { "decimal", "decimal" },
+        { "money", "decimal" },
+        { "float", "float" }
     };
     
     public EnvDTE.Project GetCurrentProject()
