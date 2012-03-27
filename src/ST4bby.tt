@@ -1,47 +1,95 @@
 ﻿<#@ Include File="ST4bby.Config.ttinclude" #>
-<#@ Assembly Name="System.Xml" #>
 <#@ Assembly Name="System.Core" #>
-<#@ Assembly Name="Microsoft.SqlServer.ConnectionInfo" #>
-<#@ Assembly Name="Microsoft.SqlServer.Management.Sdk.Sfc" #>
-<#@ Assembly Name="Microsoft.SqlServer.Smo" #>
 <#@ Assembly Name="System.Data" #>
+<#@ Assembly Name="System.Xml" #>
 <#@ Assembly Name="EnvDTE" #>
-<#@ Import Namespace="System.Xml.Serialization" #>
-<#@ Import Namespace="System.Linq" #>
-<#@ Import Namespace="System.Data.Common" #>
-<#@ Import Namespace="System.Text.RegularExpressions" #>
 <#@ Import Namespace="System.Collections.Generic" #>
-<#@ import namespace="System.Diagnostics" #>
-<#@ import namespace="System.IO" #>
-<#@ import namespace="System.Text" #>
-<#@ import namespace="System.Xml" #>
-<#@ import namespace="EnvDTE" #>
-<#@ Import Namespace="Microsoft.SqlServer.Management.Smo" #>
-<#@ Import Namespace="Microsoft.SqlServer.Management.Common" #>
+<#@ Import Namespace="System.Data.Common" #>
+<#@ Import Namespace="System.Data.SqlClient" #>
+<#@ import Namespace="System.Diagnostics" #>
+<#@ import Namespace="System.IO" #>
+<#@ Import Namespace="System.Linq" #>
+<#@ import Namespace="System.Text" #>
+<#@ Import Namespace="System.Text.RegularExpressions" #>
+<#@ import Namespace="System.Xml" #>
+<#@ Import Namespace="System.Xml.Serialization" #>
+<#@ import Namespace="EnvDTE" #>
 <#
     if( ConfigIsValid() )
     {
         var connectionString = GetConnectionString();
         
-        using( SqlConnection conn = new SqlConnection( connectionString ) )
+        var sqlGetTables = @"
+SELECT t.object_id, t.name, s.name
+FROM sys.tables t
+JOIN sys.schemas s ON t.schema_id = s.schema_id";
+
+        var sqlGetColumns = @"
+SELECT c.name, c.is_identity, c.is_nullable, ty.name, ty.max_length, ty.precision
+FROM sys.tables t
+JOIN sys.columns c ON t.object_id = c.object_id
+JOIN sys.types ty ON c.user_type_id = ty.user_type_id
+WHERE t.object_id = @TableId";
+
+        using (var sqlConnection = new SqlConnection(connectionString))
         {
-            var serverConnection = new ServerConnection(conn);
-            var tables = new Server(serverConnection).Databases[DatabaseName].Tables;
+            var tables = new List<Table>();
 
-            foreach( Table table in tables )
+            sqlConnection.Open();
+
+            using (var sqlCommand = new SqlCommand(sqlGetTables, sqlConnection))
+            using (var sqlDataReader = sqlCommand.ExecuteReader())
             {
-                if( IsClassOkToGenerate( table ) )
+                while (sqlDataReader.Read())
                 {
-                    OutputClass( NameSpaceName, table );
-                    var fileName = FileNameFormat.Replace( "{table}", table.Name ).Replace( "{schema}", table.Schema ).Replace( "{database}", DatabaseName );
-                    if( !fileName.EndsWith(".cs") )
-                        fileName += ".cs";
+                    tables.Add(new Table
+                        {
+                            TableId = (int)sqlDataReader.GetValue(0),
+                            Name = (string)sqlDataReader.GetValue(1),
+                            Schema = (string)sqlDataReader.GetValue(2),
+                            // TODO: Where do we get this from?
+                            IsSystemObject = false
+                        });
+                }
 
-                    var path = SaveOutput( fileName );
-                    // total hack but it adds the newly written file into the current visual studio instance
-                    var project = GetCurrentProject();
+                sqlDataReader.Close();
+            }
+            
+            foreach (var table in tables)
+            {
+                using (var sqlCommand = new SqlCommand(sqlGetColumns, sqlConnection))
+                {
+                    sqlCommand.Parameters.AddWithValue("@TableId", table.TableId);
 
-                    project.ProjectItems.AddFromFile( path );
+                    using(var sqlDataReader = sqlCommand.ExecuteReader())
+					{
+						while (sqlDataReader.Read())
+						{
+                            table.Columns.Add(new Column
+                            {
+                                Name = (string)sqlDataReader.GetValue(0),
+                                IsIdentity = (bool)sqlDataReader.GetValue(1),
+                                IsNullable = (bool)sqlDataReader.GetValue(2),
+                                Type = (string)sqlDataReader.GetValue(3),
+                                MaxLength = (Int16)sqlDataReader.GetValue(4),
+                                Precision = (byte)sqlDataReader.GetValue(5)
+                            });
+
+							if (IsClassOkToGenerate(table))
+							{
+								OutputClass(NameSpaceName, table);
+								var fileName = FileNameFormat.Replace("{table}", table.Name).Replace("{schema}", table.Schema).Replace("{database}", DatabaseName);
+								if (!fileName.EndsWith(".cs"))
+									fileName += ".cs";
+
+								var path = SaveOutput(fileName);
+								// total hack but it adds the newly written file into the current visual studio instance
+								var project = GetCurrentProject();
+
+								project.ProjectItems.AddFromFile(path);
+							}
+						}
+					}
                 }
             }
         }
@@ -128,8 +176,8 @@
     /// <returns></returns>
     private static string CreateMethodParameter( Column column )
     {
-        var isNullable       = column.Nullable;
-        var type             = TypeMappings.ContainsKey(column.DataType.Name) ? TypeMappings[column.DataType.Name] : "string";
+        var isNullable       = column.IsNullable;
+        var type             = TypeMappings.ContainsKey(column.Type) ? TypeMappings[column.Type] : "string";
         var typeFormat       = type != "string" && isNullable ? "Nullable<{0}>" : "{0}";
 
         return String.Format( "{0} {1}", String.Format( typeFormat,type ), column.Name );
@@ -146,16 +194,16 @@
     /// <param name="includePrimaryKey">Whether the primary key should be included or not.
     /// New objects often can't have the PK set at the client, only in the database.</param>
     /// <returns></returns>
-    private static string CreateMethodSignature( string scope, bool isStatic, string returnType, string methodName, ColumnCollection columns, bool includePrimaryKey = true )
+    private static string CreateMethodSignature( string scope, bool isStatic, string returnType, string methodName, List<Column> columns, bool includePrimaryKey = true )
     {
         // Create a list of the method's parameters.
         var paramList = new List<string>();
 
         if( columns != null )
         {
-            foreach( Column column in columns )
+            foreach( var column in columns )
             {
-                if( ! column.InPrimaryKey || includePrimaryKey )
+                if( ! column.IsIdentity || includePrimaryKey )
                 {
                     paramList.Add( CreateMethodParameter( column ) );
                 }
@@ -179,13 +227,13 @@
     /// <param name="columns"></param>
     /// <param name="includePrimaryKey"></param>
     /// <returns></returns>
-    private static string CreateNamedArgumentListForConstructor( ColumnCollection columns, bool includePrimaryKey = true )
+    private static string CreateNamedArgumentListForConstructor( List<Column> columns, bool includePrimaryKey = true )
     {
         var assignmentList = new List<string>();
 
-        foreach( Column column in columns )
+        foreach( var column in columns )
         {
-            if( ! column.InPrimaryKey || includePrimaryKey )
+            if( ! column.IsIdentity || includePrimaryKey )
             {
                 assignmentList.Add( column.Name + " = " + column.Name );
             }
@@ -223,8 +271,8 @@
 
     private string OutputProperty( Column column )
     {
-        var isNullable       = column.Nullable;
-        var type             = TypeMappings.ContainsKey(column.DataType.Name) ? TypeMappings[column.DataType.Name] : "string";
+        var isNullable       = column.IsNullable;
+        var type             = TypeMappings.ContainsKey(column.Type) ? TypeMappings[column.Type] : "string";
         var typeFormat       = type != "string" && isNullable ? "Nullable<{0}>" : "{0}";
 
         var annotations      = GetAnnotations( column );
@@ -237,10 +285,10 @@
         var builder = new List<string>();
         var canHaveLength = new string[] { "nvarchar", "varchar", "char", "nchar" };
 
-        if(col.InPrimaryKey)
+        if(col.IsIdentity)
             builder.Add("Key");
 
-        if(!col.Nullable)
+        if(!col.IsNullable)
             builder.Add("Required");
 
         var classDisplayName = col.Name;
@@ -264,15 +312,15 @@
 
         builder.Add(String.Format(@"Display(Name=""{0}"")", classDisplayName));
 
-        if( canHaveLength.Contains( col.DataType.Name ) && col.DataType.MaximumLength > -1 )
-            builder.Add( String.Format( "StringLength({0})", col.DataType.MaximumLength ) );
+        if( canHaveLength.Contains( col.Type ) && col.MaxLength > -1 )
+            builder.Add( String.Format( "StringLength({0})", col.MaxLength ) );
 
         var notations = String.Join( ", ", builder );
 
         return builder.Count > 0 ? String.Format( "[{0}]{1}", notations, System.Environment.NewLine ) : String.Empty;
     }
 
-    IEnumerable<string> GatherProperties( ColumnCollection columns )
+    IEnumerable<string> GatherProperties( IEnumerable<Column> columns )
     {
         foreach ( Column col in columns )
             yield return OutputProperty( col );
@@ -357,5 +405,30 @@
             Out( "}" );
         PopIndent();
         Out( "}" );
+    }
+
+    public class Table
+    {
+        public int TableId { get; set; }
+        public string Name { get; set; }
+        public string Schema { get; set; }
+        public bool IsSystemObject { get; set; }
+
+        public List<Column> Columns { get; set; }
+
+        public Table()
+        {
+            Columns = new List<Column>();
+        }
+    }
+
+    public class Column
+    {
+        public string Name { get; set; }
+        public bool IsIdentity { get; set; }
+        public bool IsNullable { get; set; }
+        public string Type { get; set; }
+        public int MaxLength { get; set; }
+        public int Precision { get; set; }
     }
 #>
