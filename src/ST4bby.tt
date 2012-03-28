@@ -25,7 +25,7 @@ FROM sys.tables t
 JOIN sys.schemas s ON t.schema_id = s.schema_id";
 
         var sqlGetColumns = @"
-SELECT c.name, c.is_identity, c.is_nullable, ty.name, ty.max_length, ty.precision
+SELECT c.name, c.is_identity, c.is_nullable, ty.name, c.max_length, ty.precision
 FROM sys.tables t
 JOIN sys.columns c ON t.object_id = c.object_id
 JOIN sys.types ty ON c.user_type_id = ty.user_type_id
