@@ -19,7 +19,7 @@
     string SqlAuth_Username             = @"";
     string SqlAuth_Password             = @"";
 
-    // ...or if you want to use sql authentication fill out this variable
+    // ...or if you want to use a connection from your App/Web.config
     string Config_ConnectionName        = @"";
 
     // CONFIGURE CODE GENERATION HERE
@@ -29,9 +29,9 @@
     const string ExcludeTablesRegex = "";
 
     // Regex filter for the tables that are included for code generation.
-    // Note: Exclusions take precedene over inclusions.
+    // Note: Exclusions take precedence over inclusions.
     // E.g.: "Applications|aspnet_.*" would include the tables for the ASP.NET Membership Provider.
-    const string IncludeTablesRegex = "MFG.*";
+    const string IncludeTablesRegex = "";
 
     // The format for the class file name.
     // By default ST4bby uses the following format: {schema}.{tablename}
@@ -60,7 +60,7 @@
     // E.g.: ClassInheritFrom = "MyBaseClass, IMyInterface".
     const string ClassInheritFrom = "";
 
-    // The Path to the 
+    // The Path to the
     // E.g.:
     //     Models
     //     Models/SubModels
@@ -100,11 +100,11 @@
     }
 
     int recurseCount = 0;
-    
+
     string GetRootProjectDirectory( string root = null )
     {
         ++recurseCount;
-        
+
         if( root == null )
         {
             recurseCount = 0;

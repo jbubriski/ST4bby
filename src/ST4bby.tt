@@ -18,7 +18,7 @@
     if( ConfigIsValid() )
     {
         var connectionString = GetConnectionString();
-        
+
         var sqlGetTables = @"
 SELECT t.object_id, t.name, s.name
 FROM sys.tables t
@@ -54,7 +54,7 @@ WHERE t.object_id = @TableId";
 
                 sqlDataReader.Close();
             }
-            
+
             foreach (var table in tables)
             {
                 using (var sqlCommand = new SqlCommand(sqlGetColumns, sqlConnection))
@@ -62,9 +62,9 @@ WHERE t.object_id = @TableId";
                     sqlCommand.Parameters.AddWithValue("@TableId", table.TableId);
 
                     using(var sqlDataReader = sqlCommand.ExecuteReader())
-					{
-						while (sqlDataReader.Read())
-						{
+                    {
+                        while (sqlDataReader.Read())
+                        {
                             table.Columns.Add(new Column
                             {
                                 Name = (string)sqlDataReader.GetValue(0),
@@ -75,29 +75,29 @@ WHERE t.object_id = @TableId";
                                 Precision = (byte)sqlDataReader.GetValue(5)
                             });
 
-							if (IsClassOkToGenerate(table))
-							{
-								OutputClass(NameSpaceName, table);
-								var fileName = FileNameFormat.Replace("{table}", table.Name).Replace("{schema}", table.Schema).Replace("{database}", DatabaseName);
-								if (!fileName.EndsWith(".cs"))
-									fileName += ".cs";
+                            if (IsClassOkToGenerate(table))
+                            {
+                                OutputClass(NameSpaceName, table);
+                                var fileName = FileNameFormat.Replace("{table}", table.Name).Replace("{schema}", table.Schema).Replace("{database}", DatabaseName);
+                                if (!fileName.EndsWith(".cs"))
+                                    fileName += ".cs";
 
-								var path = SaveOutput(fileName);
-								// total hack but it adds the newly written file into the current visual studio instance
-								var project = GetCurrentProject();
+                                var path = SaveOutput(fileName);
+                                // total hack but it adds the newly written file into the current visual studio instance
+                                var project = GetCurrentProject();
 
-								project.ProjectItems.AddFromFile(path);
-							}
-						}
-					}
+                                project.ProjectItems.AddFromFile(path);
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 #>
 <#+
-    
-    private readonly static Dictionary<string, string> TypeMappings = new Dictionary<string, string> 
+
+    private readonly static Dictionary<string, string> TypeMappings = new Dictionary<string, string>
     {
         { "bit","bool" },
         { "uniqueidentifier","Guid" },
@@ -116,7 +116,7 @@ WHERE t.object_id = @TableId";
         { "money", "decimal" },
         { "float", "float" }
     };
-    
+
     public EnvDTE.Project GetCurrentProject()
     {
         var serviceProvider             = (IServiceProvider)Host;
@@ -125,7 +125,7 @@ WHERE t.object_id = @TableId";
 
         return (EnvDTE.Project)currentSlnProjects.GetValue( 0 );
     }
-    
+
     /// <summary> This method creates the signature for the class.
     /// E.g.: public partial class Customer()
     /// </summary>
@@ -135,14 +135,14 @@ WHERE t.object_id = @TableId";
     private static string CreateClassSignature( Table table, bool usePartialClass )
     {
         var ret = "public";
-        
+
         if( usePartialClass )
         {
             ret += " partial";
         }
-        
+
         ret += " class " + table.Name;
-        
+
         if( false == string.IsNullOrWhiteSpace( ClassInheritFrom ) )
         {
             ret += " : " + ClassInheritFrom;
@@ -168,7 +168,7 @@ WHERE t.object_id = @TableId";
 
         return ret;
     }
-    
+
     /// <summary> This method creates a parameter for a method from a column.
     /// E.g.: "int CustomerID" or "string Name".
     /// </summary>
@@ -211,11 +211,11 @@ WHERE t.object_id = @TableId";
         }
 
         return string.Format(
-            "{0}{1}{2} {3}( {4} )", 
-            scope, 
-            isStatic ? " static" : null, 
-            false == string.IsNullOrWhiteSpace( returnType ) ? " " + returnType : null, 
-            methodName, 
+            "{0}{1}{2} {3}( {4} )",
+            scope,
+            isStatic ? " static" : null,
+            false == string.IsNullOrWhiteSpace( returnType ) ? " " + returnType : null,
+            methodName,
             string.Join( ", ", paramList.ToArray() )
             );
     }
@@ -249,7 +249,7 @@ WHERE t.object_id = @TableId";
     /// <returns></returns>
     private bool IsClassOkToGenerate( Table table )
     {
-        if( !string.IsNullOrWhiteSpace( ExcludeTablesRegex ) 
+        if( !string.IsNullOrWhiteSpace( ExcludeTablesRegex )
             && ( table.IsSystemObject || Regex.IsMatch( table.Name, ExcludeTablesRegex ) ) )
         {
             return false;
@@ -301,7 +301,7 @@ WHERE t.object_id = @TableId";
                 classDisplayName = classDisplayName.Substring(0, i) + " " + classDisplayName.Substring(i, classDisplayName.Length - i);
                 i++;
             }
-            else if (classDisplayName[i].ToString() != " " && classDisplayName[i + 1].ToString() != " " 
+            else if (classDisplayName[i].ToString() != " " && classDisplayName[i + 1].ToString() != " "
                 && classDisplayName[i].ToString() != char.ToUpper(classDisplayName[i]).ToString()
                 && classDisplayName[i + 1].ToString() == char.ToUpper(classDisplayName[i + 1]).ToString())
             {
@@ -351,8 +351,8 @@ WHERE t.object_id = @TableId";
 
     void OutputClass( string namespaceName, Table table )
     {
-        Out( "// This class was automatically generated by ST4bby {0}.", System.DateTime.Now.ToString() );
-        Out( "// Read more at https://github.com/jbubriski/ST4bby/" );
+        Out( "// This class was automatically generated with love by ST4bby {0}.", System.DateTime.Now.ToString() );
+        Out( "// Read more at http://jbubriski.github.com/ST4bby/" );
         Out( "" );
         Out( CreateNamespaceSignature( namespaceName, table, UseSchemaForNamespace ) );
         Out( "{" );
