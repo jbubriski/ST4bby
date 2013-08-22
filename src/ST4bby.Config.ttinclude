@@ -1,4 +1,4 @@
-<#@ template language="C#" hostspecific="true" Debug="false" #>
+﻿<#@ template language="C#" hostspecific="true" Debug="false" #>
 <#@ Assembly Name="System.Data" #>
 <#@ Assembly Name="System.Configuration" #>
 <#@ Assembly Name="System.Web" #>
@@ -67,6 +67,26 @@
     const string TargetPath = "Models";
 
 
+    // Additional using statements to add
+    // Enter the full using statements
+    // Ex. "using Namespace.Name;" 
+    const string AdditionalUsings = "";
+    
+    // Generates a constructor that takes an IDataReader object
+    // For use in conjunction with SqlConnection, SqlCommand, and SqlDataReader
+    // For those afraid of ORM's
+    const bool GenerateIDataReaderConstructor = false;
+
+    // Generates CRUD methods with SqlConnection and SqlCommand
+    const bool GenerateSqlCrudMethods = false;
+    
+    // Code to get the SqlConnection.
+    // If you're generating SqlCommand methods, you can simplify the creation of the SqlConnection with your own code
+    // This could be:
+    // new SqlConnection(ConfigurationManager.ConnectionStrings["Default"].ConnectionString)
+    // Or something fancier like a refernce to your own custom class/method (don't forget to add using directives above if needed):
+    // ConnectionHelper.GetNewSqlConnection()
+    const string ConnectionGetCode = "";
 
     // DON'T CHANGE ANYTHING BELOW HERE UNLESS
     // YOU HAVE MORE THAN 1000 FOLLOWERS ON TWITTER

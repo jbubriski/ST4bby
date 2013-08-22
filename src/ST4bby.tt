@@ -117,6 +117,26 @@ WHERE t.object_id = @TableId";
         { "float", "float" }
     };
 
+    private readonly static Dictionary<string, string> IDataReaderTypeMappings = new Dictionary<string, string>
+    {
+        { "bit","GetBoolean" },
+        { "uniqueidentifier","Guid" },
+        { "datetime","GetDateTime" },
+        { "datetime2","GetDateTime" },
+        { "smalldatetime","GetDateTime" },
+        { "int","GetInt32" },
+        { "smallint","GetInt16" },
+        { "bigint","GetInt64" },
+        { "varchar","GetString" },
+        { "nchar","GetString" },
+        { "char","GetString" },
+        { "nvarchar","GetString" },
+        { "text","GetString" },
+        { "decimal", "GetDecimal" },
+        { "money", "GetDecimal" },
+        { "float", "GetFloat" }
+    };
+
     public EnvDTE.Project GetCurrentProject()
     {
         var serviceProvider             = (IServiceProvider)Host;
@@ -194,7 +214,7 @@ WHERE t.object_id = @TableId";
     /// <param name="includePrimaryKey">Whether the primary key should be included or not.
     /// New objects often can't have the PK set at the client, only in the database.</param>
     /// <returns></returns>
-    private static string CreateMethodSignature( string scope, bool isStatic, string returnType, string methodName, List<Column> columns, bool includePrimaryKey = true )
+    private static string CreateMethodSignature( string scope, bool isStatic, string returnType, string methodName, List<Column> columns, bool includePrimaryKey = true, string additionalParameters = null )
     {
         // Create a list of the method's parameters.
         var paramList = new List<string>();
@@ -211,12 +231,13 @@ WHERE t.object_id = @TableId";
         }
 
         return string.Format(
-            "{0}{1}{2} {3}( {4} )",
+            "{0}{1}{2}{3}({4}{5})",
             scope,
             isStatic ? " static" : null,
             false == string.IsNullOrWhiteSpace( returnType ) ? " " + returnType : null,
-            methodName,
-            string.Join( ", ", paramList.ToArray() )
+            " " + methodName,
+            string.Join( ", ", paramList.ToArray() ),
+            !string.IsNullOrWhiteSpace(additionalParameters) ? (paramList.Count > 0 ? ", " : null) + additionalParameters : null
             );
     }
 
@@ -280,6 +301,14 @@ WHERE t.object_id = @TableId";
         return String.Format( "{0}public {1} {2} {{ get; set; }}", annotations, String.Format( typeFormat,type ), column.Name );
     }
 
+    private string OutputIDataReaderMapping( Column column )
+    {
+        var isNullable       = column.IsNullable;
+        var type             = IDataReaderTypeMappings.ContainsKey(column.Type) ? IDataReaderTypeMappings[column.Type] : "GetString";
+        
+        return String.Format("{0} = dataReader.{1}(dataReader.GetOrdinal(\"{0}\"));", column.Name, type);
+    }
+
     string GetAnnotations( Column col )
     {
         var builder = new List<string>();
@@ -326,6 +355,57 @@ WHERE t.object_id = @TableId";
             yield return OutputProperty( col );
     }
 
+    IEnumerable<string> GatherIDataReaderMappings( IEnumerable<Column> columns )
+    {
+        foreach ( Column col in columns )
+            yield return OutputIDataReaderMapping( col );
+    }
+
+    string GetSqlInsertColumnNames( IEnumerable<Column> columns )
+    {
+        var sets = new List<string>();
+
+        foreach (var column in columns)
+        {
+            sets.Add(column.Name);
+        }
+
+        return string.Join(", ", sets);
+    }
+
+    string GetSqlInsertColumnValues( IEnumerable<Column> columns )
+    {
+        var sets = new List<string>();
+
+        foreach (var column in columns)
+        {
+            sets.Add("@" + column.Name);
+        }
+
+        return string.Join(", ", sets);
+    }
+
+    string GetSqlUpdateStatement( IEnumerable<Column> columns )
+    {
+        var sets = new List<string>();
+
+        foreach (var column in columns)
+        {
+            sets.Add(string.Format("{0} = @{0}", column.Name));
+        }
+
+        return string.Join(", ", sets);
+    }
+    
+    string GetPrimaryKeyName(IEnumerable<Column> columns)
+    {
+        foreach (Column column in columns)
+            if (column.IsIdentity)
+                return column.Name;
+
+        return null;
+    }
+
     void Out( string stuff )
     {
 #><#= stuff + System.Environment.NewLine #><#+
@@ -359,6 +439,19 @@ WHERE t.object_id = @TableId";
         PushIndent( "\t" );
             Out( "using System;" );
             Out( "using System.ComponentModel.DataAnnotations;" );
+
+            if (GenerateIDataReaderConstructor)
+                Out("using System.Data;");
+
+            if (GenerateSqlCrudMethods)
+            {
+                Out("using System.Collections.Generic;");
+                Out("using System.Data.SqlClient;");
+            }
+
+            if (!string.IsNullOrWhiteSpace(AdditionalUsings))
+                Out(AdditionalUsings);
+
             Out( "" );
             Out( CreateClassSignature( table, UsePartialClass ) );
             Out( "{" );
@@ -366,12 +459,36 @@ WHERE t.object_id = @TableId";
                 // Properties.
                 var properties = GatherProperties(table.Columns);
                 Out(String.Join(System.Environment.NewLine + System.Environment.NewLine, properties));
+                
+                // IDataReader Constructor
+                if (GenerateIDataReaderConstructor)
+                {
+                    Out("");
+                    Out("/// <summary>");
+                    Out("/// This constructor takes and IDataReader with all of the columns and maps them to the object");
+                    Out("/// </summary>");
+                    Out(CreateMethodSignature("public", false, null, table.Name, null) + " { }");
+
+                    Out("");
+                    Out("/// <summary>");
+                    Out("/// This constructor takes and IDataReader with all of the columns and maps them to the object");
+                    Out("/// </summary>");
+                    Out(CreateMethodSignature("public", false, null, table.Name, null, false, "IDataReader dataReader"));
+                    Out("{");
+                    PushIndent( "\t" );
+                        // Mappings
+                        var iDataReaderMappings = GatherIDataReaderMappings(table.Columns);
+                        Out(String.Join(System.Environment.NewLine, iDataReaderMappings));
+                    PopIndent();
+                    Out("}");
+                }
 
                 // Static constructors.
                 if( !string.IsNullOrWhiteSpace( NameOfStaticConstructor ) )
                 {
                     Out( "" );
-                    Out( "/// <summary> This static constructor takes all fields but the primary key." );
+                    Out( "/// <summary>" );
+                    Out( "/// This static constructor takes all fields but the primary key." );
                     Out( "/// </summary>" );
                     Out( "/// <returns></returns>" );
                     Out( CreateMethodSignature( "public", true, table.Name, NameOfStaticConstructor, table.Columns, includePrimaryKey : false ) );
@@ -401,10 +518,167 @@ WHERE t.object_id = @TableId";
                     PopIndent();
                     Out( "}" );
                 }
+
+                
+                // IDataReader Constructor
+                if (GenerateSqlCrudMethods)
+                {
+                    var primaryKeyName = GetPrimaryKeyName(table.Columns);
+                    var camelTableName = Camel(table.Name);
+                    
+                    Out("");
+                    Out(CreateMethodSignature( "public", true, table.Name, "Get", null, false, "int id"));
+                    Out("{");
+                    PushIndent( "\t" );
+                        Out("var sqlCommandText = @\"");
+                        Out("SELECT *");
+                        Out("FROM " + table.Name);
+                        Out("WHERE " + primaryKeyName + " = @" + primaryKeyName + "\";");
+                        Out("");
+                        Out("using (var sqlConnection = " + ConnectionGetCode + ")");
+                        Out("using (var sqlCommand = new SqlCommand(sqlCommandText, sqlConnection))");
+                        Out("{");
+                        PushIndent( "\t" );
+                            Out("sqlCommand.Parameters.AddWithValue(\"" + primaryKeyName + "\", id);");
+                            Out("");
+                            Out("sqlCommand.Connection.Open();");
+                            Out("");
+                            Out("var sqlReader = sqlCommand.ExecuteReader();");
+                            Out("");
+                            Out("if (sqlReader.Read())");
+                            Out("{");
+                            PushIndent( "\t" );
+                                Out("return new " + table.Name + "(sqlReader);");
+                            PopIndent();
+                            Out("}");
+                        PopIndent();
+                        Out("}");
+                        Out("");
+                        Out("return null;");
+                    PopIndent();
+                    Out("}");
+                    
+                    
+                    Out("");
+                    Out(CreateMethodSignature( "public", true, "IEnumerable<" + table.Name + ">", "Get", null));
+                    Out("{");
+                    PushIndent( "\t" );
+                        Out("var sqlCommandText = @\"");
+                        Out("SELECT *");
+                        Out("FROM " + table.Name + "\";");
+                        Out("");
+                        Out("var items = new List<" + table.Name + ">();");
+                        Out("");
+                        Out("using (var sqlConnection = " + ConnectionGetCode + ")");
+                        Out("using (var sqlCommand = new SqlCommand(sqlCommandText, sqlConnection))");
+                        Out("{");
+                        PushIndent( "\t" );
+                            Out("sqlCommand.Connection.Open();");
+                            Out("");
+                            Out("var sqlReader = sqlCommand.ExecuteReader();");
+                            Out("");
+                            Out("while (sqlReader.Read())");
+                            Out("{");
+                            PushIndent( "\t" );
+                                Out("items.Add(new " + table.Name + "(sqlReader));");
+                            PopIndent();
+                            Out("}");
+                        PopIndent();
+                        Out("}");
+                        Out("");
+                        Out("return items;");
+                    PopIndent();
+                    Out("}");
+                    
+                    
+                    Out("");
+                    Out(CreateMethodSignature( "public", true, "void", "Insert", null, false, table.Name + " " + camelTableName));
+                    Out("{");
+                    PushIndent( "\t" );
+                        Out("var sqlCommandText = @\"");
+                        Out("INSERT");
+                        Out("INTO " + table.Name);
+                        Out(GetSqlInsertColumnNames(table.Columns));
+                        Out("VALUES");
+                        Out(GetSqlInsertColumnValues(table.Columns) + "\";");
+                        Out("");
+                        Out("using (var sqlConnection = " + ConnectionGetCode + ")");
+                        Out("using (var sqlCommand = new SqlCommand(sqlCommandText, sqlConnection))");
+                        Out("{");
+                        PushIndent( "\t" );
+                            // TODO: Parameters
+                            Out("sqlCommand.Connection.Open();");
+                            Out("");
+                            Out("sqlCommand.ExecuteNonQuery();");
+                            Out("");
+                            Out("sqlCommand.Connection.Close();");
+                        PopIndent();
+                        Out("}");
+                    PopIndent();
+                    Out("}");
+
+                    
+                    Out("");
+                    Out(CreateMethodSignature( "public", true, "void", "Update", null, false, table.Name + " " + camelTableName));
+                    Out("{");
+                    PushIndent( "\t" );
+                        Out("var sqlCommandText = @\"");
+                        Out("UPDATE " + table.Name);
+                        Out("SET " + GetSqlUpdateStatement(table.Columns));
+                        Out("WHERE " + primaryKeyName + " = @" + primaryKeyName + "\";");
+                        Out("");
+                        Out("using (var sqlConnection = " + ConnectionGetCode + ")");
+                        Out("using (var sqlCommand = new SqlCommand(sqlCommandText, sqlConnection))");
+                        Out("{");
+                        PushIndent( "\t" );
+                            Out("sqlCommand.Parameters.AddWithValue(\"" + primaryKeyName + "\", " + camelTableName + "." + primaryKeyName + ");");
+                            // TODO: Parameters
+                            Out("");
+                            Out("sqlCommand.Connection.Open();");
+                            Out("");
+                            Out("sqlCommand.ExecuteNonQuery();");
+                            Out("");
+                            Out("sqlCommand.Connection.Close();");
+                        PopIndent();
+                        Out("}");
+                    PopIndent();
+                    Out("}");
+                    
+                    
+                    Out("");
+                    Out(CreateMethodSignature( "public", true, "void", "Delete", null, false, "int id"));
+                    Out("{");
+                    PushIndent( "\t" );
+                        Out("var sqlCommandText = @\"");
+                        Out("DELETE");
+                        Out("FROM " + table.Name);
+                        Out("WHERE " + primaryKeyName + " = @" + primaryKeyName + "\";");
+                        Out("");
+                        Out("using (var sqlConnection = " + ConnectionGetCode + ")");
+                        Out("using (var sqlCommand = new SqlCommand(sqlCommandText, sqlConnection))");
+                        Out("{");
+                        PushIndent( "\t" );
+                            Out("sqlCommand.Parameters.AddWithValue(\"" + primaryKeyName + "\", id);");
+                            Out("");
+                            Out("sqlCommand.Connection.Open();");
+                            Out("");
+                            Out("sqlCommand.ExecuteNonQuery();");
+                            Out("");
+                            Out("sqlCommand.Connection.Close();");
+                        PopIndent();
+                        Out("}");
+                    PopIndent();
+                    Out("}");
+                }
             PopIndent();
             Out( "}" );
         PopIndent();
         Out( "}" );
+    }
+
+    private string Camel(string name)
+    {
+        return Char.ToLowerInvariant(name[0]) + name.Substring(1);
     }
 
     public class Table
