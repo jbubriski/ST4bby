@@ -8,13 +8,18 @@
 <#@ import namespace="System.Data.Common" #>
 <#@ import namespace="System.Configuration" #>
 <#+
-    // CONFIGURE YOUR DATABASE SETTINGS HERE
-
+    // ******************************************************
     // Required settings:
-    string NameSpaceName                = @"";
-    string ServerName                   = @".\sqlexpress";
-    string DatabaseName                 = @"";
+    // ******************************************************
+    const string NameSpaceName          = @"Northwind";
+    const string ServerName             = @"localhost";
+    const string DatabaseName           = @"Northwind";
+    
+    // Where the files go. E.g.: "Models" or "Models/SubModels"
+    // THIS PATH MUST EXIST
+    const string TargetPath             = @"Models"; 
 
+    // By default Windows Auth is used.
     // If you want to use sql authentication fill out these two variables...
     string SqlAuth_Username             = @"";
     string SqlAuth_Password             = @"";
@@ -22,8 +27,10 @@
     // ...or if you want to use a connection from your App/Web.config
     string Config_ConnectionName        = @"";
 
-    // CONFIGURE CODE GENERATION HERE
-
+    
+    // ******************************************************
+    // Optinal settings:
+    // ******************************************************
     // Regex filter for the tables that are excluded from code generation.
     // E.g.: "Applications|aspnet_.*" would exclude the tables for the ASP.NET Membership Provider.
     const string ExcludeTablesRegex = "";
@@ -40,10 +47,11 @@
     //   {table} -> the name of your table
     //   {database} -> the name of your database
     // ".cs" will be used as the file extension if it is not present at the end of the format
-    const string FileNameFormat = "{database}.{schema}.{table}.cs";
+    const string FileNameFormat = "{table}.cs";
 
-    // Set to true for making partial class.
-    const bool UsePartialClass = false;
+    // Set to true to make the generated classes partial classes.
+    // If you will be adding code to the generated classes, but you want to be able to regenerate, use this.
+    const bool UsePartialClass = true;
 
     // Set to true for having the schema in the namespace affect the namespace.
     // The namespace will for instance be "MyDatalayer.dbo".
@@ -60,16 +68,19 @@
     // E.g.: ClassInheritFrom = "MyBaseClass, IMyInterface".
     const string ClassInheritFrom = "";
 
-    // The Path to the
-    // E.g.:
-    //     Models
-    //     Models/SubModels
-    const string TargetPath = "Models";
+    // Set to true to generate the attributes for validation.
+    // If you want to use this, add a reference to System.ComponentModel.DataAnnotations.
+    const bool UseDataAnnotations = false;
+
+    // Set to true to add a comment to the top of the class files to show the file was generated.
+    const bool ShowHeaderComment = true;
 
 
-
+    
+    // ******************************************************
     // DON'T CHANGE ANYTHING BELOW HERE UNLESS
     // YOU HAVE MORE THAN 1000 FOLLOWERS ON TWITTER
+    // ******************************************************
 
     string SqlAuthConnectionString = "Data Source={0};Initial Catalog={1};User Id={2};Password={3};";
     string TrustedConnectionString = "Data Source={0};Initial Catalog={1};Integrated Security=SSPI;";

@@ -1,4 +1,5 @@
-﻿<#@ Include File="ST4bby.Config.ttinclude" #>
+﻿#>
+<#@ Include File="ST4bby.Config.ttinclude" #>
 <#@ Assembly Name="System.Core" #>
 <#@ Assembly Name="System.Data" #>
 <#@ Assembly Name="System.Xml" #>
@@ -273,15 +274,19 @@ WHERE t.object_id = @TableId";
     {
         var isNullable       = column.IsNullable;
         var type             = TypeMappings.ContainsKey(column.Type) ? TypeMappings[column.Type] : "string";
-        var typeFormat       = type != "string" && isNullable ? "Nullable<{0}>" : "{0}";
+        var typeFormat       = type != "string" && isNullable ? "{0}?" : "{0}";
 
         var annotations      = GetAnnotations( column );
 
-        return String.Format( "{0}public {1} {2} {{ get; set; }}", annotations, String.Format( typeFormat,type ), column.Name );
+        // For some reason I got a table where some of the column names appeared with double quotes around them...
+        return String.Format("{0}public {1} {2} {{ get; set; }}", annotations, String.Format(typeFormat, type), column.Name.Replace(@"""", ""));
     }
 
     string GetAnnotations( Column col )
     {
+        if (!UseDataAnnotations)
+            return "";
+
         var builder = new List<string>();
         var canHaveLength = new string[] { "nvarchar", "varchar", "char", "nchar" };
 
@@ -338,9 +343,12 @@ WHERE t.object_id = @TableId";
 
     string SaveOutput( string outputFileName )
     {
+        var templateDirectory = Path.GetDirectoryName(Host.TemplateFile);
+        if (!Directory.Exists(Path.Combine(templateDirectory, TargetPath)))
+            throw new Exception("Please create the directory \"" + TargetPath + "\" or change the directory in the config file.");
+
         var content = this.GenerationEnvironment.ToString();
-        string templateDirectory = Path.GetDirectoryName( Host.TemplateFile );
-        string outputFilePath = Path.Combine( templateDirectory, TargetPath, outputFileName );
+        var outputFilePath = Path.Combine( templateDirectory, TargetPath, outputFileName );
 
         File.WriteAllText( outputFilePath, content );
 
@@ -351,14 +359,21 @@ WHERE t.object_id = @TableId";
 
     void OutputClass( string namespaceName, Table table )
     {
-        Out( "// This class was automatically generated with love by ST4bby {0}.", System.DateTime.Now.ToString() );
-        Out( "// Read more at http://jbubriski.github.com/ST4bby/" );
-        Out( "" );
+        if (ShowHeaderComment)
+        {
+            Out( "// This class was automatically generated with love by ST4bby {0}.", System.DateTime.Now.ToString() );
+            Out( "// Read more at http://jbubriski.github.com/ST4bby/" );
+        }
         Out( CreateNamespaceSignature( namespaceName, table, UseSchemaForNamespace ) );
         Out( "{" );
         PushIndent( "\t" );
             Out( "using System;" );
-            Out( "using System.ComponentModel.DataAnnotations;" );
+
+            if (UseDataAnnotations)
+            {
+                Out( "using System.ComponentModel.DataAnnotations;" );
+            }
+
             Out( "" );
             Out( CreateClassSignature( table, UsePartialClass ) );
             Out( "{" );
