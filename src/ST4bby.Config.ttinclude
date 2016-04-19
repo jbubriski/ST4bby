@@ -29,8 +29,18 @@
 
     
     // ******************************************************
-    // Optinal settings:
+    // Optional settings:
     // ******************************************************
+    // Set to true to generate the attributes for validation.
+    // If you want to use this, add a reference to System.ComponentModel.DataAnnotations.
+    const bool UseDataAnnotations = true;
+
+    // Set to true to generate attributes for Protocol Buffers via protobuf-net.
+    // If you want to use this, add the protobuf-net NuGet package.
+    // Package Manage Console command: Install-Package protobuf-net
+    // See https://github.com/mgravell/protobuf-net for usage
+    const bool UseProtoBuf = false;
+
     // Regex filter for the tables that are excluded from code generation.
     // E.g.: "Applications|aspnet_.*" would exclude the tables for the ASP.NET Membership Provider.
     const string ExcludeTablesRegex = "";
@@ -68,19 +78,19 @@
     // E.g.: ClassInheritFrom = "MyBaseClass, IMyInterface".
     const string ClassInheritFrom = "";
 
-    // Set to true to generate the attributes for validation.
-    // If you want to use this, add a reference to System.ComponentModel.DataAnnotations.
-    const bool UseDataAnnotations = false;
-
     // Set to true to add a comment to the top of the class files to show the file was generated.
     const bool ShowHeaderComment = true;
 
+    // Set to true to generate with Love.
+    const bool GenerateWithLove = false;
 
     
     // ******************************************************
     // DON'T CHANGE ANYTHING BELOW HERE UNLESS
     // YOU HAVE MORE THAN 1000 FOLLOWERS ON TWITTER
     // ******************************************************
+    
+    int ProtoBufIndex = 0;
 
     string SqlAuthConnectionString = "Data Source={0};Initial Catalog={1};User Id={2};Password={3};";
     string TrustedConnectionString = "Data Source={0};Initial Catalog={1};Integrated Security=SSPI;";

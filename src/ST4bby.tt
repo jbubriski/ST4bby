@@ -1,5 +1,4 @@
-﻿#>
-<#@ Include File="ST4bby.Config.ttinclude" #>
+﻿<#@ Include File="ST4bby.Config.ttinclude" #>
 <#@ Assembly Name="System.Core" #>
 <#@ Assembly Name="System.Data" #>
 <#@ Assembly Name="System.Xml" #>
@@ -135,7 +134,14 @@ WHERE t.object_id = @TableId";
     /// <returns></returns>
     private static string CreateClassSignature( Table table, bool usePartialClass )
     {
-        var ret = "public";
+        var ret = "";
+        
+        if (UseProtoBuf)
+        {
+            ret += string.Format("[ProtoContract]{0}", Environment.NewLine);
+        }
+
+        ret += "public";
 
         if( usePartialClass )
         {
@@ -275,14 +281,24 @@ WHERE t.object_id = @TableId";
         var isNullable       = column.IsNullable;
         var type             = TypeMappings.ContainsKey(column.Type) ? TypeMappings[column.Type] : "string";
         var typeFormat       = type != "string" && isNullable ? "{0}?" : "{0}";
-
-        var annotations      = GetAnnotations( column );
+        
+        var protoBuffAttributes = GetProtoBuffAttributes(column);
+        var annotations         = GetAnnotations(column);
 
         // For some reason I got a table where some of the column names appeared with double quotes around them...
-        return String.Format("{0}public {1} {2} {{ get; set; }}", annotations, String.Format(typeFormat, type), column.Name.Replace(@"""", ""));
+        return String.Format("{0}{1}public {2} {3} {{ get; set; }}", protoBuffAttributes, annotations, String.Format(typeFormat, type), column.Name.Replace(@"""", "").Trim());
+    }
+    
+    string GetProtoBuffAttributes(Column col)
+    {
+        if (!UseProtoBuf)
+            return "";
+
+        ProtoBufIndex++;
+        return string.Format("[ProtoMember({0})]{1}", ProtoBufIndex, System.Environment.NewLine);
     }
 
-    string GetAnnotations( Column col )
+    string GetAnnotations(Column col)
     {
         if (!UseDataAnnotations)
             return "";
@@ -315,7 +331,7 @@ WHERE t.object_id = @TableId";
             }
         }
 
-        builder.Add(String.Format(@"Display(Name=""{0}"")", classDisplayName));
+        builder.Add(String.Format(@"Display(Name=""{0}"")", classDisplayName.Replace(@"""", "").Trim()));
 
         if( canHaveLength.Contains( col.Type ) && col.MaxLength > -1 )
             builder.Add( String.Format( "StringLength({0})", col.MaxLength ) );
@@ -327,6 +343,8 @@ WHERE t.object_id = @TableId";
 
     IEnumerable<string> GatherProperties( IEnumerable<Column> columns )
     {
+        ProtoBufIndex = 0;
+
         foreach ( Column col in columns )
             yield return OutputProperty( col );
     }
@@ -361,17 +379,24 @@ WHERE t.object_id = @TableId";
     {
         if (ShowHeaderComment)
         {
-            Out( "// This class was automatically generated with love by ST4bby {0}.", System.DateTime.Now.ToString() );
-            Out( "// Read more at http://jbubriski.github.com/ST4bby/" );
+            Out("// This class was {0} by ST4bby on {1}.", 
+                (GenerateWithLove ? "lovingly crafted" : "coldly generated"), 
+                System.DateTime.Now.ToString());
+            Out("// Read more at http://jbubriski.github.com/ST4bby/");
         }
         Out( CreateNamespaceSignature( namespaceName, table, UseSchemaForNamespace ) );
         Out( "{" );
         PushIndent( "\t" );
-            Out( "using System;" );
+            Out("using System;");
 
             if (UseDataAnnotations)
             {
-                Out( "using System.ComponentModel.DataAnnotations;" );
+                Out("using System.ComponentModel.DataAnnotations;");
+            }
+
+            if (UseProtoBuf)
+            {
+                Out("using ProtoBuf;");
             }
 
             Out( "" );
